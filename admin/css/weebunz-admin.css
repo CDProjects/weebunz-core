@@ -1,0 +1,209 @@
+// File: wp-content/plugins/weebunz-core/admin/css/weebunz-admin.css
+
+/* Category Selection */
+.category-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.category-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.category-label:hover {
+    background: #e5e5e5;
+}
+
+/* Question Pool */
+.question-pool-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.question-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.question-item {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.question-item:last-child {
+    border-bottom: none;
+}
+
+.question-item label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.question-text {
+    flex: 1;
+}
+
+.question-category {
+    color: #2271b1;
+    font-size: 12px;
+    padding: 2px 8px;
+    background: #f0f7ff;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+/* Form Validation Styles */
+.form-field.has-error input,
+.form-field.has-error select {
+    border-color: #d63638;
+}
+
+.form-field.has-error .error-message {
+    color: #d63638;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Demo Analytics Styles - NEW */
+.demo-metrics {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.demo-metrics .metric {
+    padding: 12px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.demo-metrics .metric:hover {
+    transform: translateY(-2px);
+}
+
+.demo-metrics .metric strong {
+    display: block;
+    color: #2271b1;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.demo-metrics .metric .value {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 8px 0;
+}
+
+.demo-metrics small {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.target-platform {
+    grid-column: 1 / -1;
+    text-align: center;
+    background: #2271b1;
+    color: white;
+    padding: 12px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.target-platform strong {
+    color: white;
+    font-size: 16px;
+}
+
+.target-platform small {
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+
+/* Performance Indicators */
+.performance-indicator {
+    height: 4px;
+    background: #e5e5e5;
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.performance-indicator .bar {
+    height: 100%;
+    background: #00a32a;
+    width: 0;
+    transition: width 0.5s ease;
+}
+
+.performance-indicator .bar.warning {
+    background: #dba617;
+}
+
+.performance-indicator .bar.critical {
+    background: #d63638;
+}
+
+/* Demo Mode Badge */
+.demo-mode-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #2271b1;
+    color: white;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 0 10px;
+}
+
+.loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 2px solid #2271b1;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

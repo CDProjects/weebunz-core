@@ -1,0 +1,22 @@
+{
+    "name": "cdproject/weebunz-core",
+    "description": "Weebunz Quiz and Raffle WordPress Plugin",
+    "type": "wordpress-plugin",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "Weebunz\\": "includes/",
+            "Weebunz\\Admin\\": "admin/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Casey Dent",
+            "email": "caseydentprojects@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require-dev": {
+        "phpunit/phpunit": "9.6.x-dev"
+    }
+}

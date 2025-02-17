@@ -1,0 +1,44 @@
+/* File: wp-content/plugins/weebunz-core/public/css/weebunz-public.css */
+
+.quiz-player {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.quiz-timer {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    background: #eee;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar .progress {
+    background: #4299e1;
+    height: 100%;
+    transition: width 1s linear;
+}
+
+.answers-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.answer-button {
+    padding: 15px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.answer-button:hover {
+    background: #f7fafc;
+    transform: translateY(-1px);
+}
