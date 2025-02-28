@@ -57,16 +57,48 @@ class DB_Manager {
         }
     }
 
-    public function create_tables() {
-        Logger::info('Creating base tables');
-        
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        
-        $schema_file = WEEBUNZ_PLUGIN_DIR . 'includes/database/schema.sql';
-        if (!file_exists($schema_file)) {
-            Logger::error('Schema file not found', ['path' => $schema_file]);
-            throw new \Exception('Schema file not found: ' . $schema_file);
+    
+public function create_tables() {
+    Logger::info('Creating base tables');
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    
+    global $wpdb;
+
+    // List of tables in correct order
+    $tables = [
+        'wp_quiz_types',
+        'wp_quiz_tags',
+        'wp_active_quizzes',
+        'wp_questions_pool',
+        'wp_question_answers',
+        'wp_quiz_sessions',
+        'wp_quiz_attempts',
+        'wp_quiz_tag_relations',
+        'wp_user_answers'
+    ];
+
+    // Load SQL schema
+    $schema_file = WEEBUNZ_PLUGIN_DIR . 'includes/database/schema.sql';
+    if (!file_exists($schema_file)) {
+        Logger::error('Schema file not found', ['path' => $schema_file]);
+        throw new \Exception('Schema file not found: ' . $schema_file);
+    }
+
+    $schema_content = file_get_contents($schema_file);
+    if (!$schema_content) {
+        Logger::error('Failed to read schema file', ['path' => $schema_file]);
+        throw new \Exception('Failed to read schema file');
+    }
+
+    // Execute SQL for each table in the correct order
+    foreach ($tables as $table) {
+        if (strpos($schema_content, "CREATE TABLE IF NOT EXISTS `$table`") !== false) {
+            $wpdb->query("CREATE TABLE IF NOT EXISTS `$table` " . $schema_content);
+            Logger::debug('Table created', ['table' => $table]);
         }
+    }
+}
+
         
         $schema_content = file_get_contents($schema_file);
         if ($schema_content === false) {
