@@ -78,54 +78,34 @@ public function create_tables() {
     ];
 
     // Load SQL schema
-    $schema_file = WEEBUNZ_PLUGIN_DIR . 'includes/database/schema.sql';
-    if (!file_exists($schema_file)) {
-        Logger::error('Schema file not found', ['path' => $schema_file]);
-        throw new \Exception('Schema file not found: ' . $schema_file);
-    }
-
     $schema_content = file_get_contents($schema_file);
-    if (!$schema_content) {
-        Logger::error('Failed to read schema file', ['path' => $schema_file]);
-        throw new \Exception('Failed to read schema file');
-    }
+if (!$schema_content) {
+    Logger::error('Failed to read schema file', ['path' => $schema_file]);
+    throw new \Exception('Failed to read schema file');
+}
 
-    // Execute SQL for each table in the correct order
-    foreach ($tables as $table) {
-        if (strpos($schema_content, "CREATE TABLE IF NOT EXISTS `$table`") !== false) {
-            $wpdb->query("CREATE TABLE IF NOT EXISTS `$table` " . $schema_content);
-            Logger::debug('Table created', ['table' => $table]);
-        }
+// Replace placeholders in the schema
+$schema_content = str_replace(
+    ['{prefix}', '{charset_collate}'],
+    [$this->wpdb->prefix, $this->charset_collate],
+    $schema_content
+);
+
+$statements = array_filter(
+    array_map('trim', explode(';', $schema_content)),
+    'strlen'
+);
+
+foreach ($statements as $sql) {
+    $result = dbDelta($sql);
+    if (!empty($result)) {
+        Logger::debug('Table operation result', ['result' => $result]);
     }
 }
 
-        
-        $schema_content = file_get_contents($schema_file);
-        if ($schema_content === false) {
-            Logger::error('Could not read schema file', ['path' => $schema_file]);
-            throw new \Exception('Could not read schema file');
-        }
+Logger::info('Base tables created successfully');
+}
 
-        $schema_content = str_replace(
-            ['{prefix}', '{charset_collate}'],
-            [$this->wpdb->prefix, $this->charset_collate],
-            $schema_content
-        );
-
-        $statements = array_filter(
-            array_map('trim', explode(';', $schema_content)),
-            'strlen'
-        );
-
-        foreach ($statements as $sql) {
-            $result = dbDelta($sql);
-            if (!empty($result)) {
-                Logger::debug('Table operation result', ['result' => $result]);
-            }
-        }
-
-        Logger::info('Base tables created successfully');
-    }
 
     private function process_updates() {
         try {
