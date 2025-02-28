@@ -10,6 +10,23 @@
  * Requires PHP: 7.4
  */
 
+// Check for REST API issues
+add_action('admin_notices', function() {
+    if (is_admin() && current_user_can('manage_options')) {
+        // Check if REST API is disabled
+        $rest_available = rest_get_url_prefix() !== false;
+        if (!$rest_available) {
+            echo '<div class="error"><p>REST API is disabled! WeeBunz plugin requires REST API to function.</p></div>';
+        }
+
+        // Check for permalink issues
+        $permalink_structure = get_option('permalink_structure');
+        if (empty($permalink_structure)) {
+            echo '<div class="error"><p>You are using default permalinks which may cause REST API issues. Please switch to post name permalinks for WeeBunz plugin to work properly.</p></div>';
+        }
+    }
+});
+
 // Prevent direct access
 if (!defined('WPINC')) {
     die;
@@ -29,8 +46,7 @@ define('WEEBUNZ_PLUGIN_NAME', 'weebunz-core');
 // Store plugin instance globally
 global $weebunz_plugin;
 
-// Required dependencies in correct order
-require_once __DIR__ . '/vendor/autoload.php';
+// Required dependencies
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-logger.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/database/class-db-manager.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-quiz-manager.php';
@@ -48,13 +64,13 @@ function activate_weebunz() {
     try {
         \Weebunz\Logger::init();
         \Weebunz\Logger::info('Starting plugin activation...');
-        
+
         // Initialize DB Manager
         $db_manager = new \Weebunz\Database\DB_Manager();
-        
+
         // Run full initialization
         $result = $db_manager->initialize();
-        
+
         if (!$result) {
             throw new \Exception('Database initialization failed');
         }
@@ -72,7 +88,7 @@ function activate_weebunz() {
 
         flush_rewrite_rules();
         \Weebunz\Logger::info('Plugin activation completed successfully');
-        
+
     } catch (\Exception $e) {
         \Weebunz\Logger::exception($e, ['context' => 'plugin_activation']);
         wp_die('Error activating WeeBunz plugin: ' . esc_html($e->getMessage()));
@@ -85,16 +101,16 @@ function activate_weebunz() {
 function deactivate_weebunz() {
     try {
         \Weebunz\Logger::info('Starting plugin deactivation...');
-        
+
         $upload_dir = wp_upload_dir();
         $temp_dir = $upload_dir['basedir'] . '/weebunz/temp';
         if (is_dir($temp_dir)) {
             array_map('unlink', glob("$temp_dir/*.*"));
         }
-        
+
         flush_rewrite_rules();
         \Weebunz\Logger::info('Plugin deactivation completed successfully');
-        
+
     } catch (\Exception $e) {
         \Weebunz\Logger::exception($e, ['context' => 'plugin_deactivation']);
     }
@@ -116,18 +132,20 @@ function load_weebunz_textdomain() {
 }
 add_action('init', 'load_weebunz_textdomain', 10);
 
-add_filter('load_textdomain_mofile', function($mofile, $domain) {
-    if ($domain === 'pomana') {
-        return false;
-    }
-    return $mofile;
-}, 10, 2);
-
-
 /**
- * Global plugin instance
+ * Register and initialize REST API routes
  */
-global $weebunz_plugin;
+function weebunz_register_quiz_routes() {
+    $quiz_controller = new \Weebunz\Controllers\Quiz_Controller();
+
+    error_log('Initializing Weebunz API Routes'); // Debugging Log
+
+    add_action('rest_api_init', function () use ($quiz_controller) {
+        $quiz_controller->register_routes();
+        error_log('Weebunz Quiz Routes Registered'); // Debugging Log
+    });
+}
+add_action('init', 'weebunz_register_quiz_routes');
 
 /**
  * Initialize plugin
@@ -147,12 +165,6 @@ function init_weebunz() {
             $weebunz_plugin = \Weebunz\WeeBunz::get_instance();
             $weebunz_plugin->run();
 
-            // Initialize Quiz Controller and register REST routes
-            add_action('rest_api_init', function() {
-                $quiz_controller = new \Weebunz\Controllers\Quiz_Controller();
-                $quiz_controller->register_routes();
-            });
-
             \Weebunz\Logger::info('WeeBunz plugin initialized successfully');
 
         } catch (\Exception $e) {
@@ -167,29 +179,40 @@ function init_weebunz() {
 // Register initialization hook
 add_action('plugins_loaded', 'init_weebunz', 20);
 
-        /**
-        * Autoloader
-        */
-        spl_autoload_register(function ($class) {
-            $prefix = 'Weebunz\\';
-            $base_dirs = [
-                WEEBUNZ_PLUGIN_DIR . 'includes/',
-                WEEBUNZ_PLUGIN_DIR . 'admin/'
-            ];
+/**
+ * Autoloader
+ */
+spl_autoload_register(function ($class) {
+    $prefix = 'Weebunz\\';
+    $base_dirs = [
+        WEEBUNZ_PLUGIN_DIR . 'includes/',
+        WEEBUNZ_PLUGIN_DIR . 'admin/'
+    ];
 
-            $len = strlen($prefix);
-            if (strncmp($prefix, $class, $len) !== 0) {
-                return;
-            }
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
 
-            $relative_class = substr($class, $len);
-            $file = str_replace('\\', '/', $relative_class) . '.php';
-    
-            foreach ($base_dirs as $base_dir) {
-                $path = $base_dir . $file;
-                if (file_exists($path)) {
-                    require_once $path;
-                    break;
-                }
-            }
-        });
+    $relative_class = substr($class, $len);
+    $file = str_replace('\\', '/', $relative_class) . '.php';
+
+    foreach ($base_dirs as $base_dir) {
+        $path = $base_dir . $file;
+        if (file_exists($path)) {
+            require_once $path;
+            break;
+        }
+    }
+});
+
+// Simple test route to confirm REST API is working
+add_action('rest_api_init', function() {
+    register_rest_route('weebunz/v1', '/test', [
+        'methods' => 'GET',
+        'callback' => function() {
+            return rest_ensure_response(['success' => true, 'message' => 'API is working']);
+        },
+        'permission_callback' => '__return_true'
+    ]);
+});

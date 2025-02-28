@@ -24,7 +24,7 @@
             this.answerSubmitted = false;
 
             $(document).ready(() => {
-                console.log('Document ready in QuizTestController'); // Add this line
+                console.log('Document ready in QuizTestController');
                 this.bindEvents();
                 this.initializeInterface();
             
@@ -32,11 +32,56 @@
                 console.log('Quiz type select exists:', $('#quiz_type').length > 0);
                 console.log('Start button exists:', $('#start-quiz').length > 0);
                 console.log('Start button disabled:', $('#start-quiz').prop('disabled'));
+            
+            async testApiConnection() {
+    try {
+        console.log('Testing API connection...');
+        
+        if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
+            console.error('API configuration missing');
+            this.log('API configuration missing', 'error');
+            return;
+        }
+        
+        const url = `${window.weebunzTest.apiEndpoint}/test`;
+        console.log(`Making test request to: ${url}`);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-WP-Nonce': window.weebunzTest.nonce
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log(`Test response status: ${response.status}`);
+        const responseText = await response.text();
+        console.log('Test response text:', responseText);
+        
+        try {
+            const data = JSON.parse(responseText);
+            console.log('Parsed test response:', data);
+            this.log('API test successful', 'success');
+        } catch (e) {
+            console.error('Failed to parse test response:', e);
+            this.log(`Failed to parse test response: ${e.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('API test failed:', error);
+        this.log(`API test failed: ${error.message}`, 'error');
+    }
+}
             });
         }
 
         bindEvents() {
             console.log('Binding events...');
+
+            $('#test-api').on('click', (e) => {
+    e.preventDefault();
+    console.log('Test API button clicked');
+    this.testApiConnection();
+});
     
             // Quiz type selection with direct handler
             $('#quiz_type').on('change', (e) => {
@@ -125,59 +170,88 @@
         }
 
         async handleStartQuiz() {
-    try {
-        // Prevent multiple clicks
-        if (this.loading) {
-            return;
+            try {
+                console.log('handleStartQuiz called');
+                
+                // Prevent multiple clicks
+                if (this.loading) {
+                    console.log('Already loading, ignoring click');
+                    return;
+                }
+
+                if (this.sessionId) {
+                    console.log('Session already exists, resetting');
+                    await this.handleResetQuiz();
+                    return;
+                }
+
+                const quizTypeId = $('#quiz_type').val();
+                console.log(`Selected quiz type ID: ${quizTypeId}`);
+                
+                if (!quizTypeId) {
+                    console.log('No quiz type selected');
+                    this.log('No quiz type selected', 'error');
+                    return;
+                }
+
+                this.setLoading(true);
+                this.log('Starting quiz...', 'info');
+
+                // Disable start button immediately
+                $('#start-quiz').prop('disabled', true);
+                console.log('Start button disabled for request');
+
+                try {
+                    console.log('Making quiz/start request');
+                    const response = await this.makeRequest('POST', 'quiz/start', {
+                        quiz_id: quizTypeId
+                    });
+                    console.log('Quiz start response received:', response);
+
+                    if (response.success) {
+                        console.log(`Session ID received: ${response.session_id}`);
+                        this.sessionId = response.session_id;
+                        
+                        console.log('Setting quiz state from response:', response.quiz_info);
+                        this.quizState.totalQuestions = response.quiz_info.total_questions;
+                        this.quizState.timeLimit = response.quiz_info.time_limit;
+                        
+                        this.updateSessionInfo(response);
+                        this.log('Quiz started successfully', 'success');
+                        
+                        console.log('Updating UI elements');
+                        $('#quiz-interface').removeClass('hidden');
+                        $('#start-quiz').text('End Quiz').prop('disabled', false);
+                        $('#reset-quiz').prop('disabled', false);
+                        $('.quiz-test-controls').removeClass('hidden');
+
+                        console.log('About to fetch first question');
+                        await this.fetchNextQuestion();
+                        console.log('First question fetched successfully');
+                    } else {
+                        console.error('Quiz start failed:', response);
+                        this.log(`Quiz start failed: ${response.message || 'Unknown error'}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error in handleStartQuiz:', error);
+                    this.log(`Error in handleStartQuiz: ${error.message}`, 'error');
+                    this.handleError(error);
+                    $('#start-quiz').prop('disabled', false);
+                }
+            } catch (error) {
+                console.error('Outer error in handleStartQuiz:', error);
+                this.log(`Outer error in handleStartQuiz: ${error.message}`, 'error');
+                this.handleError(error);
+                $('#start-quiz').prop('disabled', false);
+            } finally {
+                console.log('handleStartQuiz completed');
+                this.setLoading(false);
+            }
         }
-
-        if (this.sessionId) {
-            await this.handleResetQuiz();
-            return;
-        }
-
-        const quizTypeId = $('#quiz_type').val();
-        if (!quizTypeId) {
-            this.log('No quiz type selected', 'error');
-            return;
-        }
-
-        this.setLoading(true);
-        this.log('Starting quiz...', 'info');
-
-        // Disable start button immediately
-        $('#start-quiz').prop('disabled', true);
-
-        const response = await this.makeRequest('POST', 'quiz/start', {
-            quiz_id: quizTypeId
-        });
-
-        if (response.success) {
-            this.sessionId = response.session_id;
-            this.quizState.totalQuestions = response.quiz_info.total_questions;
-            this.quizState.timeLimit = response.quiz_info.time_limit;
-    
-            this.updateSessionInfo(response);
-            this.log('Quiz started successfully', 'success');
-    
-            $('#quiz-interface').removeClass('hidden');
-            $('#start-quiz').text('End Quiz').prop('disabled', false);
-            $('#reset-quiz').prop('disabled', false);
-            $('.quiz-test-controls').removeClass('hidden');
-
-            await this.fetchNextQuestion();
-        }
-
-    } catch (error) {
-        this.handleError(error);
-        $('#start-quiz').prop('disabled', false);
-    } finally {
-        this.setLoading(false);
-    }
-}
 
         async handleResetQuiz() {
             try {
+                console.log('handleResetQuiz called');
                 this.setLoading(true);
         
                 if (this.timer) {
@@ -215,8 +289,10 @@
         
                 this.updateSessionInfo(null);
                 this.log('Quiz reset completed', 'info');
+                console.log('Quiz reset completed');
         
             } catch (error) {
+                console.error('Error in handleResetQuiz:', error);
                 this.handleError(error);
             } finally {
                 this.setLoading(false);
@@ -225,39 +301,50 @@
 
         async fetchNextQuestion() {
             try {
+                console.log('fetchNextQuestion called');
+                console.log(`Current session ID: ${this.sessionId}`);
+                
                 this.log('Fetching next question...', 'debug');
+                
+                console.log('Making quiz/question request');
                 const response = await this.makeRequest('GET', 'quiz/question');
-        
+                console.log('Question response received:', response);
+                
                 this.log('Question response received', 'debug');
                 this.log(JSON.stringify(response), 'debug');
-        
+                
                 if (response.completed) {
+                    console.log('Quiz completed, handling completion');
                     await this.handleQuizComplete();
                     return;
                 }
 
                 if (!response.question) {
+                    console.error('No question data in response');
                     throw new Error('No question data in response');
                 }
 
+                console.log('Question data:', response.question);
                 this.currentQuestion = response.question;
                 this.displayQuestion(response.question);
                 this.startTimer(response.question.time_limit);
-        
+                
                 this.log('Question displayed successfully', 'debug');
             } catch (error) {
+                console.error('Error fetching question:', error);
                 this.log('Error fetching question: ' + error.message, 'error');
                 this.handleError(error);
             }
         }
 
         displayQuestion(question) {
+            console.log('displayQuestion called with:', question);
             const $display = $('#quiz-display');
             $display.empty();
 
             if (!question || !question.answers) {
+                console.error('Invalid question data:', question);
                 this.log('Invalid question data', 'error');
-                console.error('Question data:', question);
                 return;
             }
 
@@ -268,6 +355,7 @@
                 answers_count: question.answers.length
             });
 
+            console.log('Building question HTML');
             const html = `
                 <div class="question-container">
                     <h3>Question ${question.question_number} of ${question.total_questions}</h3>
@@ -284,16 +372,20 @@
             `;
 
             $display.html(html);
+            console.log('Question HTML added to display');
 
             // Remove any existing click handlers first
             $('.answer-option').off('click');
-    
+            
             // Add new click handlers
             $('.answer-option').on('click', async (e) => {
                 e.preventDefault();
                 const $button = $(e.currentTarget);
-        
+                
+                console.log('Answer button clicked:', $button.data('answer-id'));
+                
                 if (this.answerSubmitted) {
+                    console.log('Answer already submitted, ignoring click');
                     this.log('Answer already submitted, ignoring click');
                     return;
                 }
@@ -309,13 +401,23 @@
 
                 // Add visual feedback for selected answer
                 $button.addClass('selected');
-        
+                
+                console.log('Submitting answer');
                 await this.handleAnswerSubmit($button.data('answer-id'));
             });
+            
+            console.log('Answer click handlers attached');
         }
 
         async handleAnswerSubmit(answerId) {
+            console.log('handleAnswerSubmit called with answerId:', answerId);
+            
             if (!this.currentQuestion || !this.sessionId || this.answerSubmitted) {
+                console.error('Cannot submit answer - invalid state', {
+                    currentQuestion: !!this.currentQuestion,
+                    sessionId: !!this.sessionId,
+                    answerSubmitted: this.answerSubmitted
+                });
                 this.log('Cannot submit answer - invalid state', 'error');
                 return;
             }
@@ -341,31 +443,44 @@
                     time_taken: timeTaken,
                     session_id: this.sessionId
                 });
-
-                const response = await this.makeRequest('POST', 'quiz/answer', {
-                    session_id: this.sessionId, // Ensure session ID is included
+                
+                console.log('Making answer submission request with data:', {
+                    session_id: this.sessionId,
                     question_id: this.currentQuestion.id,
                     answer_id: answerId,
                     time_taken: timeTaken
                 });
 
-
+                const response = await this.makeRequest('POST', 'quiz/answer', {
+                    question_id: this.currentQuestion.id,
+                    answer_id: answerId,
+                    time_taken: timeTaken
+                });
+                
+                console.log('Answer submission response:', response);
 
                 if (response.success) {
+                    console.log('Answer submission successful, processing result');
                     if (response.result.is_correct) {
                         this.quizState.correctAnswers++;
+                        console.log('Answer was correct, updated score:', this.quizState.correctAnswers);
                     }
             
                     await this.showAnswerFeedback(response.result.is_correct);
             
                     if (response.result.quiz_completed) {
+                        console.log('Quiz completed according to result, handling completion');
                         await this.handleQuizComplete();
                     } else {
+                        console.log('Fetching next question after answer');
                         await this.fetchNextQuestion();
                     }
+                } else {
+                    console.error('Answer submission response not successful:', response);
                 }
 
             } catch (error) {
+                console.error('Failed to submit answer:', error);
                 this.log(`Failed to submit answer: ${error.message}`, 'error');
                 // Re-enable buttons on error
                 $('.answer-option').prop('disabled', false);
@@ -376,6 +491,7 @@
         }
 
         async showAnswerFeedback(isCorrect) {
+            console.log('Showing answer feedback, correct:', isCorrect);
             $('.answer-feedback').remove();
     
             const $feedback = $('<div>')
@@ -392,6 +508,7 @@
         }
 
         startTimer(timeLimit) {
+            console.log('Starting timer with limit:', timeLimit);
             if (this.timer) {
                 clearInterval(this.timer);
             }
@@ -416,6 +533,7 @@
         }
 
         async handleTimeout() {
+            console.log('Question timed out');
             this.log('Question timed out', 'warning');
     
             if (this.timer) {
@@ -432,19 +550,27 @@
 
         async handleQuizComplete() {
             try {
+                console.log('handleQuizComplete called');
+                console.log('Making quiz/complete request');
                 const response = await this.makeRequest('POST', 'quiz/complete');
+                console.log('Quiz completion response:', response);
                 
                 if (response.success) {
+                    console.log('Quiz completed successfully, displaying results');
                     this.displayResults(response.results);
                     this.quizState.completed = true;
                     this.log('Quiz completed successfully', 'success');
+                } else {
+                    console.error('Quiz completion response not successful:', response);
                 }
             } catch (error) {
+                console.error('Error completing quiz:', error);
                 this.handleError(error);
             }
         }
 
         displayResults(results) {
+            console.log('Displaying quiz results:', results);
             const $display = $('#quiz-display');
             $display.empty();
             $('.timer-display').empty();
@@ -463,9 +589,11 @@
             `;
 
             $display.html(html);
+            console.log('Results displayed');
         }
 
         async skipQuestion() {
+            console.log('skipQuestion called');
             this.log('Skipping question', 'warning');
             if (this.currentQuestion) {
                 await this.handleAnswerSubmit(null);
@@ -473,6 +601,7 @@
         }
 
         async forceTimeout() {
+            console.log('forceTimeout called');
             this.log('Forcing timeout', 'warning');
             if (this.timer) {
                 clearInterval(this.timer);
@@ -483,6 +612,7 @@
         }
 
         async simulateDisconnect() {
+            console.log('simulateDisconnect called');
             this.log('Simulating network disconnect', 'warning');
             this.simulateLag = true;
             setTimeout(() => {
@@ -492,8 +622,10 @@
         }
 
         async clearSession() {
+            console.log('clearSession called, sessionId:', this.sessionId);
             if (this.sessionId) {
                 try {
+                    console.log('Attempting to clear session');
                     await this.makeRequest('POST', 'quiz/session/clear', {
                         session_id: this.sessionId
                     });
@@ -501,13 +633,16 @@
                     this.sessionId = null;
                     this.updateSessionInfo(null);
                     this.log('Session cleared', 'warning');
+                    console.log('Session cleared successfully');
                 } catch (error) {
+                    console.error('Error clearing session:', error);
                     this.handleError(error);
                 }
             }
         }
 
         setLoading(isLoading) {
+            console.log('setLoading called with:', isLoading);
             this.loading = isLoading;
             $('#quiz-interface')[isLoading ? 'addClass' : 'removeClass']('loading');
             $('#start-quiz').prop('disabled', isLoading);
@@ -516,65 +651,90 @@
             this.log(`Loading state: ${isLoading ? 'enabled' : 'disabled'}`, 'debug');
         }
 
-        // In quiz-test.js - update the makeRequest method:
-async makeRequest(method, endpoint, data = null) {
-    try {
-        if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
-            throw new Error('API configuration missing');
-        }
-
-        const url = `${window.weebunzTest.apiEndpoint}/${endpoint}`;
-        this.log(`Making ${method} request to ${endpoint}`, 'debug');
-        if (data) {
-            this.log(`Request data: ${JSON.stringify(data)}`, 'debug');
-        }
-
-        const config = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-WP-Nonce': window.weebunzTest.nonce
-            },
-            credentials: 'same-origin'
-        };
-
-        if (this.sessionId) {
-            config.headers['X-Quiz-Session'] = this.sessionId;
-        }
-
-        if (data) {
-            config.body = JSON.stringify(data);
-        }
-
-        const response = await fetch(url, config);
-            let responseData;
-
+        async makeRequest(method, endpoint, data = null) {
             try {
-                responseData = await response.json();
+                console.log(`makeRequest called: ${method} ${endpoint}`);
+                
+                if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
+                    console.log('API configuration missing');
+                    throw new Error('API configuration missing');
+                }
+
+                const url = `${window.weebunzTest.apiEndpoint}/${endpoint}`;
+                console.log(`Making ${method} request to ${url}`);
+                this.log(`Making ${method} request to ${endpoint}`, 'debug');
+                if (data) {
+                    console.log('Request data:', data);
+                    this.log(`Request data: ${JSON.stringify(data)}`, 'debug');
+                }
+
+                const config = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': window.weebunzTest.nonce
+                    },
+                    credentials: 'same-origin'
+                };
+
+                if (this.sessionId) {
+                    config.headers['X-Quiz-Session'] = this.sessionId;
+                    console.log(`Including session ID in headers: ${this.sessionId}`);
+                    this.log(`Including session ID: ${this.sessionId}`, 'debug');
+                }
+
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+
+                if (this.simulateLag) {
+                    const delay = Math.random() * 2000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+
+                console.log('Fetch request config:', config);
+                const response = await fetch(url, config);
+                console.log(`Response status: ${response.status}`);
+                this.log(`Response status: ${response.status}`, 'debug');
+                
+                // Get the raw response text first
+                const responseText = await response.text();
+                console.log('Raw response text:', responseText);
+                this.log(`Raw response: ${responseText}`, 'debug');
+                
+                // Then try to parse it as JSON
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                    console.log('Parsed response data:', responseData);
+                    this.log(`Parsed response data: ${JSON.stringify(responseData)}`, 'debug');
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    this.log(`Failed to parse JSON response: ${e.message}`, 'error');
+                    throw new Error(`Invalid JSON response: ${responseText}`);
+                }
+
+                if (!response.ok) {
+                    const error = new Error(
+                        responseData?.message || 
+                        responseData?.error || 
+                        `Request failed with status ${response.status}`
+                    );
+                    error.response = responseData;
+                    throw error;
+                }
+
+                return responseData;
+
             } catch (error) {
-                console.error('[Quiz Test] Failed to parse JSON response', error);
-                responseData = { success: false, error: 'Invalid response from server' };
+                console.error('Request error:', error);
+                this.log(`Request error: ${error.message}`, 'error');
+                throw error;
             }
-
-        try {
-            responseData = await response.json();
-        } catch (e) {
-            responseData = { message: 'Invalid response format' };
         }
-
-        if (!response.ok) {
-            throw new Error(responseData.message || `Request failed with status ${response.status}`);
-        }
-
-        return responseData;
-
-    } catch (error) {
-        this.log(`Request error: ${error.message}`, 'error');
-        throw error;
-    }
-}
 
         updateSessionInfo(data) {
+            console.log('updateSessionInfo called with:', data);
             const sessionInfo = $('#session-data');
             if (data) {
                 sessionInfo.html(JSON.stringify(data, null, 2));
@@ -584,11 +744,13 @@ async makeRequest(method, endpoint, data = null) {
         }
 
         clearLog() {
+            console.log('clearLog called');
             $('#debug-log').empty();
             this.log('Debug log cleared', 'info');
         }
 
         exportLog() {
+            console.log('exportLog called');
             const logContent = Array.from($('#debug-log').children())
                 .map(el => el.textContent)
                 .reverse()
@@ -630,6 +792,7 @@ async makeRequest(method, endpoint, data = null) {
         }
 
         handleError(error) {
+            console.error('handleError called with:', error);
             this.log(`Error: ${error.message}`, 'error');
             console.error('[Quiz Test]', error);
         }
@@ -706,6 +869,7 @@ async makeRequest(method, endpoint, data = null) {
         if (window.WeebunzQuizTest) {
             window.WeebunzQuizTest.log(`Global error: ${msg}`, 'error');
         }
+        console.error('Global error:', msg, url, lineNo, columnNo, error);
         return false;
     };
 
@@ -714,6 +878,7 @@ async makeRequest(method, endpoint, data = null) {
         if (window.WeebunzQuizTest) {
             window.WeebunzQuizTest.log(`Unhandled promise rejection: ${event.reason}`, 'error');
         }
+        console.error('Unhandled promise rejection:', event.reason);
     };
 
     // Initialize when document is ready

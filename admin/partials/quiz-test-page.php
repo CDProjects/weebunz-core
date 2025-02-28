@@ -90,6 +90,7 @@ $quiz_types = $wpdb->get_results("
             <div class="quiz-actions mt-3">
                 <button id="start-quiz" class="button button-primary" disabled="disabled">Start Quiz</button>
                 <button id="reset-quiz" class="button" disabled>Reset Quiz</button>
+                <button id="test-api" class="button">Test API Connection</button>
             </div>
         </div>
 
