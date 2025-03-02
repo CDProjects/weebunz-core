@@ -22,7 +22,7 @@
                 completed: false
             };
             this.answerSubmitted = false;
-
+    
             $(document).ready(() => {
                 console.log('Document ready in QuizTestController');
                 this.bindEvents();
@@ -32,57 +32,57 @@
                 console.log('Quiz type select exists:', $('#quiz_type').length > 0);
                 console.log('Start button exists:', $('#start-quiz').length > 0);
                 console.log('Start button disabled:', $('#start-quiz').prop('disabled'));
-            
-            async testApiConnection() {
-    try {
-        console.log('Testing API connection...');
-        
-        if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
-            console.error('API configuration missing');
-            this.log('API configuration missing', 'error');
-            return;
-        }
-        
-        const url = `${window.weebunzTest.apiEndpoint}/test`;
-        console.log(`Making test request to: ${url}`);
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-WP-Nonce': window.weebunzTest.nonce
-            },
-            credentials: 'same-origin'
-        });
-        
-        console.log(`Test response status: ${response.status}`);
-        const responseText = await response.text();
-        console.log('Test response text:', responseText);
-        
-        try {
-            const data = JSON.parse(responseText);
-            console.log('Parsed test response:', data);
-            this.log('API test successful', 'success');
-        } catch (e) {
-            console.error('Failed to parse test response:', e);
-            this.log(`Failed to parse test response: ${e.message}`, 'error');
-        }
-    } catch (error) {
-        console.error('API test failed:', error);
-        this.log(`API test failed: ${error.message}`, 'error');
-    }
-}
-            });
+            }); // Properly close the document ready function
+        } // Properly close the constructor
+    
+        async testApiConnection() {
+            try {
+                console.log('Testing API connection...');
+                
+                if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
+                    console.error('API configuration missing');
+                    this.log('API configuration missing', 'error');
+                    return;
+                }
+                
+                const url = `${window.weebunzTest.apiEndpoint}/test`;
+                console.log(`Making test request to: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-WP-Nonce': window.weebunzTest.nonce
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                console.log(`Test response status: ${response.status}`);
+                const responseText = await response.text();
+                console.log('Test response text:', responseText);
+                
+                try {
+                    const data = JSON.parse(responseText);
+                    console.log('Parsed test response:', data);
+                    this.log('API test successful', 'success');
+                } catch (e) {
+                    console.error('Failed to parse test response:', e);
+                    this.log(`Failed to parse test response: ${e.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('API test failed:', error);
+                this.log(`API test failed: ${error.message}`, 'error');
+            }
         }
 
         bindEvents() {
             console.log('Binding events...');
 
             $('#test-api').on('click', (e) => {
-    e.preventDefault();
-    console.log('Test API button clicked');
-    this.testApiConnection();
-});
-    
+                e.preventDefault();
+                console.log('Test API button clicked');
+                this.testApiConnection();
+            });
+            
             // Quiz type selection with direct handler
             $('#quiz_type').on('change', (e) => {
                 console.log('Direct change event on quiz type');
@@ -106,11 +106,11 @@
             $('#force-timeout').on('click', () => this.forceTimeout());
             $('#simulate-disconnect').on('click', () => this.simulateDisconnect());
             $('#clear-session').on('click', () => this.clearSession());
-    
+
             // Debug controls
             $('#clear-log').on('click', () => this.clearLog());
             $('#export-log').on('click', () => this.exportLog());
-    
+
             // Test option toggles
             $('#debug-mode').on('change', (e) => {
                 this.debugMode = e.target.checked;
