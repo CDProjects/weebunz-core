@@ -64,7 +64,7 @@ class DB_Manager {
         
         global $wpdb;
     
-        // List of tables in correct order
+        // List of tables in the correct creation order
         $tables = [
             'wp_quiz_types',
             'wp_quiz_tags',
@@ -98,20 +98,27 @@ class DB_Manager {
             $schema_content
         );
     
+        // Split SQL statements
         $statements = array_filter(
             array_map('trim', explode(';', $schema_content)),
             'strlen'
         );
     
-        foreach ($statements as $sql) {
-            $result = dbDelta($sql);
-            if (!empty($result)) {
-                Logger::debug('Table operation result', ['result' => $result]);
+        foreach ($tables as $table) {
+            foreach ($statements as $sql) {
+                if (strpos($sql, "CREATE TABLE IF NOT EXISTS `{$table}`") !== false) {
+                    Logger::debug('Executing SQL for table', ['table' => $table]);
+                    $result = dbDelta($sql);
+                    if (!empty($result)) {
+                        Logger::debug('Table operation result', ['result' => $result]);
+                    }
+                }
             }
         }
     
         Logger::info('Base tables created successfully');
     }
+    
     
 
 
