@@ -9,26 +9,20 @@ SET @table_exists = (
 );
 
 -- Only create if table doesn't exist
-SET @create_sql = IF(@table_exists = 0,
-    'CREATE TABLE `{prefix}spending_log` (
-        `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        `user_id` bigint(20) UNSIGNED NOT NULL,
-        `amount` decimal(10,2) NOT NULL,
-        `type` enum("quiz", "membership", "mega_quiz") NOT NULL,
-        `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
-        `description` varchar(255) DEFAULT NULL,
-        `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (`id`),
-        KEY `user_id` (`user_id`),
-        KEY `created_at` (`created_at`),
-        KEY `type_reference` (`type`, `reference_id`),
-        CONSTRAINT `fk_spending_user` 
-            FOREIGN KEY (`user_id`) 
-            REFERENCES `{prefix}users` (`ID`) 
-            ON DELETE CASCADE
-    ) {charset_collate}',
-    'SELECT "Table {prefix}spending_log already exists" AS message'
-);
+
+CREATE TABLE IF NOT EXISTS `{prefix}spending_log` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` bigint(20) UNSIGNED NOT NULL,
+    `amount` decimal(10,2) NOT NULL,
+    `type` enum('quiz', 'membership', 'mega_quiz') NOT NULL,
+    `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
+    `description` varchar(255) DEFAULT NULL,
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `created_at` (`created_at`),
+    KEY `weekly_spending` (`user_id`, `created_at`)
+) {charset_collate};
 
 -- Execute the create statement
 PREPARE create_stmt FROM @create_sql;
