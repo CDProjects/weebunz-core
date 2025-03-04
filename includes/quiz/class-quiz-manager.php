@@ -394,4 +394,31 @@ class Quiz_Manager {
             throw $e;
         }
     }
+
+    /**
+ * Debug the session data to help troubleshoot issues
+ */
+        private function debug_session_data($session_id, $context = '') {
+            try {
+                $transient_data = get_transient('weebunz_quiz_session_' . $session_id);
+                $db_session = $this->wpdb->get_row($this->wpdb->prepare(
+                    "SELECT * FROM {$this->wpdb->prefix}quiz_sessions 
+                    WHERE session_id = %s",
+                    $session_id
+                ));
+        
+                Logger::debug('Session debug info: ' . $context, [
+                    'session_id' => $session_id,
+                    'transient_exists' => !empty($transient_data),
+                    'db_exists' => !empty($db_session),
+                    'db_status' => $db_session ? $db_session->status : 'N/A',
+                    'db_expires' => $db_session ? $db_session->expires_at : 'N/A'
+                ]);
+            } catch (\Exception $e) {
+                Logger::error('Error debugging session', [
+                    'session_id' => $session_id,
+                    'error' => $e->getMessage()
+            ]);
+        }
+    }
 }
