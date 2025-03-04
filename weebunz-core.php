@@ -176,6 +176,91 @@ function init_weebunz() {
     }
 }
 
+/**
+ * Create spending_log table if it doesn't exist
+ */
+function weebunz_create_spending_log_table() {
+    global $wpdb;
+    
+    // Check if spending_log table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}spending_log'");
+    
+    if (!$table_exists) {
+        error_log('Creating spending_log table');
+        
+        // Create spending_log table
+        $sql = "CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}spending_log` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `user_id` bigint(20) UNSIGNED NOT NULL,
+            `amount` decimal(10,2) NOT NULL,
+            `type` enum('quiz', 'membership', 'mega_quiz') NOT NULL,
+            `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
+            `description` varchar(255) DEFAULT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `user_id` (`user_id`),
+            KEY `created_at` (`created_at`),
+            KEY `weekly_spending` (`user_id`, `created_at`)
+        ) {$wpdb->get_charset_collate()}";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+        
+        if ($wpdb->last_error) {
+            error_log('Failed to create spending_log table: ' . $wpdb->last_error);
+        } else {
+            error_log('spending_log table created successfully');
+        }
+    }
+}
+add_action('admin_init', 'weebunz_create_spending_log_table');
+
+/**
+ * Debug helper function for question data
+ */
+function weebunz_debug_question_data() {
+    global $wpdb;
+    
+    // Only show in admin and when debug is enabled
+    if (!is_admin() || !defined('WP_DEBUG') || !WP_DEBUG) {
+        return;
+    }
+    
+    echo '<div class="notice notice-info is-dismissible">';
+    echo '<h3>WeeBunz Question Data Debug</h3>';
+    
+    // Count questions by difficulty
+    $question_counts = $wpdb->get_results("
+        SELECT difficulty_level, COUNT(*) as count 
+        FROM {$wpdb->prefix}questions_pool 
+        GROUP BY difficulty_level
+    ");
+    
+    echo '<h4>Questions by Difficulty</h4>';
+    echo '<ul>';
+    foreach ($question_counts as $count) {
+        echo "<li>{$count->difficulty_level}: {$count->count}</li>";
+    }
+    echo '</ul>';
+    
+    // Count answers
+    $answer_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}question_answers");
+    echo "<p>Total answers: {$answer_count}</p>";
+    
+    // Check quiz types
+    $quiz_types = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}quiz_types");
+    echo '<h4>Quiz Types</h4>';
+    echo '<ul>';
+    foreach ($quiz_types as $type) {
+        echo "<li>{$type->name}: requires {$type->question_count} questions of {$type->difficulty_level} difficulty</li>";
+    }
+    echo '</ul>';
+    
+    echo '</div>';
+}
+// Uncomment this line to show the debug information on admin pages
+// add_action('admin_notices', 'weebunz_debug_question_data');
+
 // Register initialization hook
 add_action('plugins_loaded', 'init_weebunz', 20);
 
