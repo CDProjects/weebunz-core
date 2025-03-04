@@ -179,6 +179,36 @@ function init_weebunz() {
 // Register initialization hook
 add_action('plugins_loaded', 'init_weebunz', 20);
 
+// Add this near the end of the file before the autoloader, after the simple test route
+add_action('rest_api_init', function() {
+    register_rest_route('weebunz/v1', '/quiz/session/clear', [
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $session_id = $request->get_param('session_id');
+            if (!$session_id) {
+                return new WP_REST_Response(['success' => false, 'error' => 'No session ID provided'], 400);
+            }
+            
+            // Delete the transient
+            delete_transient('weebunz_quiz_session_' . $session_id);
+            
+            // Update the session status in database if it exists
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->prefix . 'quiz_sessions',
+                [
+                    'status' => 'expired',
+                    'ended_at' => current_time('mysql')
+                ],
+                ['session_id' => $session_id]
+            );
+            
+            return new WP_REST_Response(['success' => true, 'message' => 'Session cleared']);
+        },
+        'permission_callback' => '__return_true'
+    ]);
+});
+
 /**
  * Autoloader
  */
