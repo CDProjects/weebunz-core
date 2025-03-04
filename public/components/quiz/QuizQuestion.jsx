@@ -14,11 +14,11 @@ const QuizQuestion = ({
   return (
     <div className="space-y-6">
       <div className="text-lg font-medium mb-4">
-        {question.text}
+        {question.question_text}
       </div>
 
       <div className="space-y-3">
-        {question.options.map((answer) => (
+        {question.answers.map((answer) => (
           <Button
             key={answer.id}
             onClick={() => onAnswerSelect(answer.id)}
