@@ -412,6 +412,12 @@
         this.answerSubmitted = false;
 
         console.log("Making quiz/question request");
+        // Check if session ID is present in headers when making the request
+        console.log(`Session ID being sent: ${this.sessionId}`);
+        if (!this.sessionId) {
+            console.error("No session ID available for question request!");
+            this.log("No session ID available for question request!", "error");
+        }
         const response = await this.makeRequest("GET", "quiz/question");
         console.log("Question response received:", response);
 

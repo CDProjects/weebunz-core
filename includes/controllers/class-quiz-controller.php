@@ -147,50 +147,63 @@ public function start_quiz($request) {
 }
 
     /**
-     * Get current question
-     */
-    public function get_question($request) {
-        try {
-            $session_id = $request->get_header('X-Quiz-Session');
-            Logger::debug('Getting question', ['session_id' => $session_id]);
-    
-            if (!$session_id) {
-                return new \WP_Error(
-                    'missing_session',
-                    'Quiz session ID is required',
-                    ['status' => 400]
-                );
-            }
+ * Get current question
+ */
+public function get_question($request) {
+    try {
+        error_log('Quiz question request received');
+        $session_id = $request->get_header('X-Quiz-Session');
+        
+        error_log('Quiz question request with session ID: ' . ($session_id ?? 'MISSING'));
+        Logger::debug('Getting question', ['session_id' => $session_id]);
 
+        if (!$session_id) {
+            error_log('Quiz question request missing session ID');
+            return new \WP_Error(
+                'missing_session',
+                'Quiz session ID is required',
+                ['status' => 400]
+            );
+        }
+
+        try {
             $question = $this->quiz_manager->get_next_question($session_id);
-    
-            if (!$question) {
+            
+            if ($question === null) {
+                error_log('Quiz completed for session: ' . $session_id);
                 Logger::debug('No more questions, quiz completed');
                 return rest_ensure_response([
                     'success' => true,
                     'completed' => true
                 ]);
             }
-
+            
+            error_log('Question fetched for session ' . $session_id . ': ' . json_encode(['id' => $question['id']]));
+            
             // Structure the question data to match the frontend expectations
             return rest_ensure_response([
                 'success' => true,
                 'question' => $question
             ]);
-
         } catch (\Exception $e) {
-            Logger::error('Failed to get question', [
-                'session_id' => $session_id ?? 'none',
-                'error' => $e->getMessage()
-            ]);
-    
-            return new \WP_Error(
-                'question_fetch_failed',
-                'Failed to fetch question',
-                ['status' => 500]
-            );
+            error_log('Error getting question for session ' . $session_id . ': ' . $e->getMessage());
+            throw $e;
         }
+    } catch (\Exception $e) {
+        error_log('Exception in get_question: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+        Logger::error('Failed to get question', [
+            'session_id' => $session_id ?? 'none',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return new \WP_Error(
+            'question_fetch_failed',
+            'Failed to fetch question: ' . $e->getMessage(),
+            ['status' => 500]
+        );
     }
+}
 
     /**
      * Submit answer for current question
