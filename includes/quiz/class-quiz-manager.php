@@ -396,29 +396,59 @@ class Quiz_Manager {
     }
 
     /**
- * Debug the session data to help troubleshoot issues
- */
-        private function debug_session_data($session_id, $context = '') {
-            try {
-                $transient_data = get_transient('weebunz_quiz_session_' . $session_id);
-                $db_session = $this->wpdb->get_row($this->wpdb->prepare(
-                    "SELECT * FROM {$this->wpdb->prefix}quiz_sessions 
-                    WHERE session_id = %s",
-                    $session_id
-                ));
-        
-                Logger::debug('Session debug info: ' . $context, [
-                    'session_id' => $session_id,
-                    'transient_exists' => !empty($transient_data),
-                    'db_exists' => !empty($db_session),
-                    'db_status' => $db_session ? $db_session->status : 'N/A',
-                    'db_expires' => $db_session ? $db_session->expires_at : 'N/A'
-                ]);
-            } catch (\Exception $e) {
-                Logger::error('Error debugging session', [
-                    'session_id' => $session_id,
-                    'error' => $e->getMessage()
+     * Debug the session data to help troubleshoot issues
+     */
+    private function debug_session_data($session_id, $context = '') {
+        try {
+            $transient_data = get_transient('weebunz_quiz_session_' . $session_id);
+            $db_session = $this->wpdb->get_row($this->wpdb->prepare(
+                "SELECT * FROM {$this->wpdb->prefix}quiz_sessions 
+                WHERE session_id = %s",
+                $session_id
+            ));
+    
+            Logger::debug('Session debug info: ' . $context, [
+                'session_id' => $session_id,
+                'transient_exists' => !empty($transient_data),
+                'db_exists' => !empty($db_session),
+                'db_status' => $db_session ? $db_session->status : 'N/A',
+                'db_expires' => $db_session ? $db_session->expires_at : 'N/A'
             ]);
+        } catch (\Exception $e) {
+            Logger::error('Error debugging session', [
+                'session_id' => $session_id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Get the name of a quiz type by ID
+     * 
+     * @param int $quiz_id Quiz type ID
+     * @return string|null Quiz type name or null if not found
+     */
+    public function get_quiz_type_name($quiz_id) {
+        try {
+            Logger::debug('Getting quiz type name', ['quiz_id' => $quiz_id]);
+            
+            $quiz_type = $this->wpdb->get_var($this->wpdb->prepare(
+                "SELECT name FROM {$this->wpdb->prefix}quiz_types WHERE id = %d",
+                $quiz_id
+            ));
+            
+            if (!$quiz_type) {
+                Logger::warning('Quiz type not found', ['quiz_id' => $quiz_id]);
+                return null;
+            }
+            
+            return $quiz_type;
+        } catch (\Exception $e) {
+            Logger::error('Failed to get quiz type name', [
+                'quiz_id' => $quiz_id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 }
