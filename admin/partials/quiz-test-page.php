@@ -13,12 +13,28 @@ if (!defined('WP_DEBUG') || !WP_DEBUG) {
 
 global $wpdb;
 
-// Enqueue required scripts
+// Enqueue required scripts - Include React directly from CDN for testing
+?>
+<script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+<?php
+
+// Enqueue jQuery
 wp_enqueue_script('jquery');
+
+// Enqueue quiz components before the test script
+wp_enqueue_script(
+    'weebunz-quiz-components',
+    WEEBUNZ_PLUGIN_URL . 'public/js/quiz-components.js',
+    array('jquery'),
+    WEEBUNZ_VERSION,
+    true
+);
+
 wp_enqueue_script(
     'weebunz-quiz-test',
     WEEBUNZ_PLUGIN_URL . 'admin/js/quiz-test.js',
-    array('jquery'),
+    array('jquery', 'weebunz-quiz-components'),
     WEEBUNZ_VERSION,
     true
 );
@@ -28,7 +44,19 @@ wp_localize_script('weebunz-quiz-test', 'weebunzTest', array(
     'ajaxUrl' => admin_url('admin-ajax.php'),
     'nonce' => wp_create_nonce('wp_rest'),
     'apiEndpoint' => rest_url('weebunz/v1'),
-    'debug' => WP_DEBUG
+    'debug' => WP_DEBUG,
+    'demoStats' => array(
+        'maxConcurrent' => 500,
+        'targetPlatform' => 'WordPress + React',
+        'scalingCapacity' => 'Optimized for low-latency on shared hosting'
+    )
+));
+
+// Also localize for the quiz components
+wp_localize_script('weebunz-quiz-components', 'weebunzQuiz', array(
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'nonce' => wp_create_nonce('wp_rest'),
+    'apiEndpoint' => rest_url('weebunz/v1')
 ));
 
 // Get quiz types with question counts
@@ -119,6 +147,12 @@ $quiz_types = $wpdb->get_results("
             </div>
         </div>
 
+        <!-- Demo Analytics Section -->
+        <div class="card quiz-analytics hidden">
+            <h2>Performance Analytics</h2>
+            <div id="demo-stats"></div>
+        </div>
+
         <!-- Debug Output -->
         <div class="card quiz-debug">
             <h2>
@@ -147,6 +181,11 @@ $quiz_types = $wpdb->get_results("
                     time: $(this).find(':selected').data('time')
                 });
             });
+            
+            // Check if React and ReactDOM are available
+            console.log('React available:', typeof React !== 'undefined');
+            console.log('ReactDOM available:', typeof ReactDOM !== 'undefined');
+            console.log('WeebunzQuiz components available:', typeof window.WeebunzQuiz !== 'undefined');
         });
     </script>
 </div>
@@ -210,37 +249,105 @@ $quiz_types = $wpdb->get_results("
     max-height: 200px;
 }
 
-.question-container {
-    padding: 20px;
+/* Quiz Styling */
+.quiz-container {
     background: white;
-    border-radius: 4px;
-    margin: 20px 0;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.question-progress {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.question-text {
+    font-size: 18px;
+    margin-bottom: 20px;
+    line-height: 1.4;
 }
 
 .timer-display {
-    font-size: 1.2em;
+    text-align: center;
     font-weight: bold;
-    text-align: center;
-    margin: 10px 0;
+    margin: 15px 0;
+    font-size: 16px;
 }
 
-.answer-feedback {
-    padding: 10px;
-    margin: 10px 0;
+.answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.answer-option {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
     border-radius: 4px;
+    padding: 12px 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.answer-option:hover:not(:disabled) {
+    background: #e8e8e8;
+    transform: translateY(-2px);
+}
+
+.answer-option.selected {
+    background: #cce5ff;
+    border-color: #99c2ff;
+}
+
+.answer-option:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.quiz-completed {
     text-align: center;
+    padding: 30px 0;
 }
 
-.answer-feedback.correct {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.quiz-completed h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
 }
 
-.answer-feedback.incorrect {
-    background-color: #f8d7da;
+.quiz-results {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 20px;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.quiz-results .score {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.quiz-results .entries {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2271b1;
+}
+
+.quiz-error {
+    background: #fdf2f2;
+    border: 1px solid #f8d7da;
+    border-radius: 6px;
+    padding: 20px;
     color: #721c24;
-    border: 1px solid #f5c6cb;
+}
+
+.quiz-loading {
+    text-align: center;
+    padding: 30px 0;
 }
 
 .hidden {
