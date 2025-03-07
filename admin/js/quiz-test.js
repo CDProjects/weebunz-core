@@ -294,9 +294,103 @@
             $("#reset-quiz").prop("disabled", false);
             $(".quiz-test-controls").removeClass("hidden");
 
-            console.log("About to fetch first question");
-            await this.fetchNextQuestion();
-            console.log("First question fetched successfully");
+            // Mount the React component with the session_id
+            try {
+              this.log("Attempting to mount React quiz component", "info");
+
+              // Check if React and our quiz component are available
+              if (
+                typeof React !== "undefined" &&
+                typeof ReactDOM !== "undefined" &&
+                typeof window.WeebunzQuiz !== "undefined" &&
+                typeof window.WeebunzQuiz.QuizPlayer !== "undefined"
+              ) {
+                const mountPoint = document.getElementById("quiz-mount-point");
+
+                if (mountPoint) {
+                  this.log(
+                    "Mounting quiz component to #quiz-mount-point",
+                    "debug"
+                  );
+
+                  // Clear the mount point first
+                  ReactDOM.unmountComponentAtNode(mountPoint);
+
+                  // Mount the component
+                  ReactDOM.render(
+                    React.createElement(window.WeebunzQuiz.QuizPlayer, {
+                      debug: this.debugMode,
+                      session: this.sessionId,
+                      onAnswer: (result) => {
+                        this.log(
+                          `Answer result: ${
+                            result.is_correct ? "Correct!" : "Incorrect"
+                          }`
+                        );
+
+                        if (result.is_correct) {
+                          this.quizState.correctAnswers++;
+                        }
+
+                        $(document).trigger("quiz:answer", result);
+                      },
+                      onComplete: (results) => {
+                        this.log(
+                          `Quiz completed! Score: ${results.correct_answers}/${results.total_questions}`,
+                          "success"
+                        );
+                        this.quizState.completed = true;
+                        $(document).trigger("quiz:complete", results);
+                      },
+                      onError: (error) => {
+                        this.log(`Quiz component error: ${error}`, "error");
+                        this.handleError(new Error(error));
+                      },
+                    }),
+                    mountPoint
+                  );
+
+                  this.log("Quiz component mounted successfully", "success");
+
+                  // Hide the regular display since we're using React
+                  $("#quiz-display").hide();
+                  $(".timer-display").hide();
+
+                  // Don't fetch the first question with the old method since React will handle it
+                  console.log("Using React component to handle quiz flow");
+                } else {
+                  this.log(
+                    "Quiz mount point not found, falling back to standard display",
+                    "warning"
+                  );
+                  this.fetchNextQuestion();
+                }
+              } else {
+                this.log(
+                  "React or quiz components not available, using standard display",
+                  "warning"
+                );
+                console.log("React available:", typeof React !== "undefined");
+                console.log(
+                  "ReactDOM available:",
+                  typeof ReactDOM !== "undefined"
+                );
+                console.log(
+                  "WeebunzQuiz available:",
+                  typeof window.WeebunzQuiz !== "undefined"
+                );
+                this.fetchNextQuestion();
+              }
+            } catch (error) {
+              this.log(
+                `Error mounting quiz component: ${error.message}`,
+                "error"
+              );
+              console.error("Quiz mounting error:", error);
+
+              // Fall back to the regular method
+              this.fetchNextQuestion();
+            }
           } else {
             console.error("Quiz start failed:", response);
             this.log(
@@ -415,8 +509,8 @@
         // Check if session ID is present in headers when making the request
         console.log(`Session ID being sent: ${this.sessionId}`);
         if (!this.sessionId) {
-            console.error("No session ID available for question request!");
-            this.log("No session ID available for question request!", "error");
+          console.error("No session ID available for question request!");
+          this.log("No session ID available for question request!", "error");
         }
         const response = await this.makeRequest("GET", "quiz/question");
         console.log("Question response received:", response);
