@@ -151,7 +151,7 @@ class WeeBunz_Public {
         ob_start();
         
         // Include the quiz template
-        include WEEBUNZ_QUIZ_PLUGIN_DIR . 'public/partials/weebunz-quiz-display.php';
+        include WEEBUNZ_PLUGIN_DIR . 'public/partials/weebunz-quiz-display.php';
         
         return ob_get_clean();
     }
@@ -191,7 +191,7 @@ class WeeBunz_Public {
         ob_start();
         
         // Include the quiz list template
-        include WEEBUNZ_QUIZ_PLUGIN_DIR . 'public/partials/weebunz-quiz-list.php';
+        include WEEBUNZ_PLUGIN_DIR . 'public/partials/weebunz-quiz-list.php';
         
         return ob_get_clean();
     }
@@ -238,7 +238,7 @@ class WeeBunz_Public {
         ob_start();
         
         // Include the results template
-        include WEEBUNZ_QUIZ_PLUGIN_DIR . 'public/partials/weebunz-user-results.php';
+        include WEEBUNZ_PLUGIN_DIR . 'public/partials/weebunz-user-results.php';
         
         return ob_get_clean();
     }
@@ -287,7 +287,7 @@ class WeeBunz_Public {
         ob_start();
         
         // Include the raffle entries template
-        include WEEBUNZ_QUIZ_PLUGIN_DIR . 'public/partials/weebunz-raffle-entries.php';
+        include WEEBUNZ_PLUGIN_DIR . 'public/partials/weebunz-raffle-entries.php';
         
         return ob_get_clean();
     }

@@ -78,48 +78,48 @@ class WeeBunz_Quiz_Engine {
          * The class responsible for orchestrating the actions and filters of the
          * core plugin.
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
 
         /**
          * The class responsible for defining internationalization functionality
          * of the plugin.
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/class-weebunz-i18n.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-i18n.php';
 
         /**
          * The class responsible for defining all actions that occur in the admin area.
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
 
         /**
          * The class responsible for defining all actions that occur in the public-facing
          * side of the site.
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'public/class-weebunz-public.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'public/class-weebunz-public.php';
 
         /**
          * The class responsible for defining all actions related to the API.
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/api/class-weebunz-api.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/api/class-weebunz-api.php';
 
         /**
          * Load optimization components
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-redis-cache.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-session-handler.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-db-manager.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-rate-limiter.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-error-handler.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-background-processor.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-redis-cache.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-session-handler.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-db-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-rate-limiter.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-error-handler.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-background-processor.php';
 
         /**
          * Load core components
          */
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-quiz-manager.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-question-manager.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-answer-manager.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-session-manager.php';
-        require_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-raffle-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-quiz-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-question-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-answer-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-session-manager.php';
+        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-raffle-manager.php';
 
         $this->loader = new WeeBunz_Loader();
     }

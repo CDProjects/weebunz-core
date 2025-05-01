@@ -222,7 +222,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_dashboard_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-dashboard.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-dashboard.php';
     }
 
     /**
@@ -231,7 +231,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_quizzes_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-quizzes.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-quizzes.php';
     }
 
     /**
@@ -240,7 +240,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_questions_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-questions.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-questions.php';
     }
 
     /**
@@ -249,7 +249,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_results_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-results.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-results.php';
     }
 
     /**
@@ -258,7 +258,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_raffle_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-raffle.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-raffle.php';
     }
 
     /**
@@ -267,7 +267,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_members_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-members.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-members.php';
     }
 
     /**
@@ -276,7 +276,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_quiz_test_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-quiz-test.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-quiz-test.php';
     }
 
     /**
@@ -285,7 +285,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_settings_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-settings.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-settings.php';
     }
 
     /**
@@ -294,7 +294,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_performance_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-performance.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-performance.php';
     }
 
     /**
