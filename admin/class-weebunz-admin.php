@@ -303,7 +303,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_tools_page() {
-        include_once WEEBUNZ_QUIZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-tools.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-tools.php';
     }
 
     /**
