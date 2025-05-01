@@ -29,7 +29,7 @@ require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-logger.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-public.php';
-require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
+require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-admin.php';
 
 // Installer class
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-installer.php';
