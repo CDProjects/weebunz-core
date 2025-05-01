@@ -28,7 +28,7 @@ class WeeBunz {
 
         $this->loader = new Loader();
         $this->admin  = new Admin( 'weebunz-core', WEEBUNZ_VERSION );
-        $this->public = new Public( 'weebunz-core', WEEBUNZ_VERSION );
+        $this->public = new WeeBunz_Public( 'weebunz-core', WEEBUNZ_VERSION );
     }
 
     private function define_admin_hooks() {
