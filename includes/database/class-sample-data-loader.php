@@ -10,6 +10,8 @@
 
 namespace Weebunz\Database;
 
+use Weebunz\Database\DB_Manager; 
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -36,7 +38,7 @@ class Sample_Data_Loader {
         
         // Get DB Manager instance
         require_once plugin_dir_path(__FILE__) . 'class-db-manager.php';
-        $this->db_manager = DB_Manager::get_instance();
+        $this->db_manager = new DB_Manager();
     }
     
     /**
