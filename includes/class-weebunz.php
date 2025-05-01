@@ -26,9 +26,10 @@ class WeeBunz {
         require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
         require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-public.php';
 
-        $this->loader = new Loader();
-        $this->admin  = new Admin( 'weebunz-core', WEEBUNZ_VERSION );
-        $this->public = new WeeBunz_Public( 'weebunz-core', WEEBUNZ_VERSION );
+        // Use the backslash to reference classes in the global namespace
+        $this->loader = new \WeeBunz_Loader();
+        $this->admin  = new \WeeBunz_Admin( 'weebunz-core', WEEBUNZ_VERSION );
+        $this->public = new \WeeBunz_Public( 'weebunz-core', WEEBUNZ_VERSION );
     }
 
     private function define_admin_hooks() {
