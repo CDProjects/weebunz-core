@@ -267,7 +267,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_members_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-members.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/members-page.php';
     }
 
     /**
@@ -285,7 +285,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_settings_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-settings.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/settings-page.php';
     }
 
     /**
