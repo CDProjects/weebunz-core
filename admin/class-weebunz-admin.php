@@ -231,7 +231,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_quizzes_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-quizzes.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/quiz-management-page.php';
     }
 
     /**
@@ -240,7 +240,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_questions_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-questions.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/questions-page.php';
     }
 
     /**
@@ -249,7 +249,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_results_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-results.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/results-page.php';
     }
 
     /**
@@ -258,7 +258,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_raffle_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-raffle.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/manage-raffles-page.php';
     }
 
     /**
