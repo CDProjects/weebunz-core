@@ -276,7 +276,7 @@ class WeeBunz_Admin {
      * @since    1.0.0
      */
     public function display_quiz_test_page() {
-        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/test-page.php.php';
+        include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/test-page.php';
     }
 
     /**
