@@ -100,7 +100,7 @@ class WeeBunz_Quiz_Engine {
         /**
          * The class responsible for defining all actions related to the API.
          */
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/api/class-weebunz-api.php';
+        /** require_once WEEBUNZ_PLUGIN_DIR . 'includes/api/class-weebunz-api.php'; */
 
         /**
          * Load optimization components
