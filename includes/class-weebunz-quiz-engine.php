@@ -10,12 +10,12 @@
 class WeeBunz_Quiz_Engine {
 
     /**
-     * The loader that's responsible for maintaining and registering all hooks that power
-     * the plugin.
+     * The loader that's responsible for maintaining and registering all hooks
+     * that power the plugin.
      *
      * @since    1.0.0
      * @access   protected
-     * @var      WeeBunz_Loader    $loader    Maintains and registers all hooks for the plugin.
+     * @var      WeeBunz_Loader    $loader    Maintains and registers all hooks.
      */
     protected $loader;
 
@@ -24,7 +24,7 @@ class WeeBunz_Quiz_Engine {
      *
      * @since    1.0.0
      * @access   protected
-     * @var      string    $plugin_name    The string used to uniquely identify this plugin.
+     * @var      string    $plugin_name  Uniquely identifies this plugin.
      */
     protected $plugin_name;
 
@@ -33,16 +33,12 @@ class WeeBunz_Quiz_Engine {
      *
      * @since    1.0.0
      * @access   protected
-     * @var      string    $version    The current version of the plugin.
+     * @var      string    $version  Plugin version.
      */
     protected $version;
 
     /**
      * Define the core functionality of the plugin.
-     *
-     * Set the plugin name and the plugin version that can be used throughout the plugin.
-     * Load the dependencies, define the locale, and set the hooks for the admin area and
-     * the public-facing side of the site.
      *
      * @since    1.0.0
      */
@@ -58,132 +54,97 @@ class WeeBunz_Quiz_Engine {
     }
 
     /**
-     * Load the required dependencies for this plugin.
-     *
-     * Include the following files that make up the plugin:
-     *
-     * - WeeBunz_Loader. Orchestrates the hooks of the plugin.
-     * - WeeBunz_i18n. Defines internationalization functionality.
-     * - WeeBunz_Admin. Defines all hooks for the admin area.
-     * - WeeBunz_Public. Defines all hooks for the public side of the site.
-     *
-     * Create an instance of the loader which will be used to register the hooks
-     * with WordPress.
+     * Load required dependencies for this plugin.
      *
      * @since    1.0.0
      * @access   private
      */
     private function load_dependencies() {
-        /**
-         * The class responsible for orchestrating the actions and filters of the
-         * core plugin.
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
+        $base = WEEBUNZ_PLUGIN_DIR;
+        $files = [
+            'includes/class-weebunz-loader.php',
+            'includes/class-weebunz-i18n.php',
+            'admin/class-weebunz-admin.php',
+            'public/class-weebunz-public.php',
+            // API stub (if exists)
+            'includes/api/class-weebunz-api.php',
+            // Optimization components
+            'includes/optimization/class-weebunz-redis-cache.php',
+            'includes/optimization/class-weebunz-session-handler.php',
+            'includes/optimization/class-weebunz-db-manager.php',
+            'includes/optimization/class-weebunz-rate-limiter.php',
+            'includes/optimization/class-weebunz-error-handler.php',
+            'includes/optimization/class-weebunz-background-processor.php',
+            // Quiz managers
+            'includes/quiz/class-weebunz-quiz-manager.php',
+            'includes/quiz/class-weebunz-question-manager.php',
+            'includes/quiz/class-weebunz-answer-manager.php',
+            'includes/quiz/class-weebunz-session-manager.php',
+            'includes/quiz/class-weebunz-raffle-manager.php',
+        ];
 
-        /**
-         * The class responsible for defining internationalization functionality
-         * of the plugin.
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-i18n.php';
+        foreach ( $files as $file ) {
+            $path = $base . $file;
+            if ( file_exists( $path ) ) {
+                require_once $path;
+            }
+        }
 
-        /**
-         * The class responsible for defining all actions that occur in the admin area.
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
-
-        /**
-         * The class responsible for defining all actions that occur in the public-facing
-         * side of the site.
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'public/class-weebunz-public.php';
-
-        /**
-         * The class responsible for defining all actions related to the API.
-         */
-        /** require_once WEEBUNZ_PLUGIN_DIR . 'includes/api/class-weebunz-api.php'; */
-
-        /**
-         * Load optimization components
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-redis-cache.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-session-handler.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-db-manager.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-rate-limiter.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-error-handler.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/optimization/class-weebunz-background-processor.php';
-
-        /**
-         * Load core components
-         */
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-quiz-manager.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-question-manager.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-answer-manager.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-session-manager.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/quiz/class-weebunz-raffle-manager.php';
-
+        // Instantiate the loader
         $this->loader = new WeeBunz_Loader();
     }
 
     /**
-     * Define the locale for this plugin for internationalization.
-     *
-     * Uses the WeeBunz_i18n class in order to set the domain and to register the hook
-     * with WordPress.
+     * Set up internationalization.
      *
      * @since    1.0.0
-     * @access   private
      */
     private function set_locale() {
         $plugin_i18n = new WeeBunz_i18n();
-        $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+        $this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
     }
 
     /**
-     * Register all of the hooks related to the admin area functionality
-     * of the plugin.
+     * Register admin area hooks.
      *
      * @since    1.0.0
-     * @access   private
      */
     private function define_admin_hooks() {
-        $plugin_admin = new WeeBunz_Admin($this->get_plugin_name(), $this->get_version());
+        $plugin_admin = new WeeBunz_Admin( $this->get_plugin_name(), $this->get_version() );
 
-        $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
-        $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
-        $this->loader->add_action('admin_menu', $plugin_admin, 'add_admin_menu');
-        $this->loader->add_action('admin_init', $plugin_admin, 'register_settings');
+        $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
+        $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+        $this->loader->add_action( 'admin_menu',           $plugin_admin, 'add_admin_menu' );
+        $this->loader->add_action( 'admin_init',           $plugin_admin, 'register_settings' );
     }
 
     /**
-     * Register all of the hooks related to the public-facing functionality
-     * of the plugin.
+     * Register public-facing hooks.
      *
      * @since    1.0.0
-     * @access   private
      */
     private function define_public_hooks() {
-        $plugin_public = new WeeBunz_Public($this->get_plugin_name(), $this->get_version());
+        $plugin_public = new WeeBunz_Public( $this->get_plugin_name(), $this->get_version() );
 
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
-        $this->loader->add_action('init', $plugin_public, 'register_shortcodes');
+        $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
+        $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+        $this->loader->add_action( 'init',              $plugin_public, 'register_shortcodes' );
     }
 
     /**
-     * Register all of the hooks related to the API functionality
-     * of the plugin.
+     * Register API hooks if the stub exists.
      *
      * @since    1.0.0
-     * @access   private
      */
     private function define_api_hooks() {
-        $plugin_api = new WeeBunz_API($this->get_plugin_name(), $this->get_version());
-
-        $this->loader->add_action('rest_api_init', $plugin_api, 'register_routes');
+        if ( class_exists( 'WeeBunz_API' ) ) {
+            $plugin_api = new WeeBunz_API( $this->get_plugin_name(), $this->get_version() );
+            $this->loader->add_action( 'rest_api_init', $plugin_api, 'register_routes' );
+        }
     }
 
     /**
-     * Run the loader to execute all of the hooks with WordPress.
+     * Run the loader to execute all hooks.
      *
      * @since    1.0.0
      */
@@ -191,34 +152,12 @@ class WeeBunz_Quiz_Engine {
         $this->loader->run();
     }
 
-    /**
-     * The name of the plugin used to uniquely identify it within the context of
-     * WordPress and to define internationalization functionality.
-     *
-     * @since     1.0.0
-     * @return    string    The name of the plugin.
-     */
-    public function get_plugin_name() {
-        return $this->plugin_name;
-    }
+    /** Get plugin name. */
+    public function get_plugin_name() { return $this->plugin_name; }
 
-    /**
-     * The reference to the class that orchestrates the hooks with the plugin.
-     *
-     * @since     1.0.0
-     * @return    WeeBunz_Loader    Orchestrates the hooks of the plugin.
-     */
-    public function get_loader() {
-        return $this->loader;
-    }
+    /** Get loader instance. */
+    public function get_loader() { return $this->loader; }
 
-    /**
-     * Retrieve the version number of the plugin.
-     *
-     * @since     1.0.0
-     * @return    string    The version number of the plugin.
-     */
-    public function get_version() {
-        return $this->version;
-    }
+    /** Get plugin version. */
+    public function get_version() { return $this->version; }
 }
