@@ -75,8 +75,8 @@ function deactivate_weebunz() {
     }
 }
 
-register_activation_hook(   __FILE__, 'activate_weebunz' );
-register_deactivation_hook( __FILE__, 'deactivate_weebunz' );
+// register_activation_hook(   __FILE__, 'activate_weebunz' );
+// register_deactivation_hook( __FILE__, 'deactivate_weebunz' );
 
 // Early textdomain load
 add_action( 'plugins_loaded', function() {
@@ -88,6 +88,6 @@ add_action( 'plugins_loaded', function() {
 }, 5 );
 
 // Boot the core
-add_action( 'plugins_loaded', function() {
-    \Weebunz\WeeBunz::get_instance()->run();
-}, 20 );
+// add_action( 'plugins_loaded', function() {
+//     \Weebunz\WeeBunz::get_instance()->run();
+// }, 20 );
