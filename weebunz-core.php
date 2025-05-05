@@ -1,12 +1,7 @@
 <?php
 /**
- * Plugin Name: Weebunz
- * Plugin URI:  https://weebunz.fi
- * Description: Custom quiz and raffle system for Weebunz
- * Version:     1.0.0
- * Author:      CD Projects
- * Text Domain: weebunz-core
- * Requires PHP: 7.4
+ * Core library for the WeeBunz Quiz Engine.
+ * This file no longer carries a Plugin Name header so WP won't register it as its own plugin.
  */
 
 // Prevent direct access
@@ -35,11 +30,11 @@ require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
 require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-installer.php';
 
 /**
- * Activation handler - runs Installer::install()
+ * Activation handler – runs Installer::install()
  */
 function activate_weebunz() {
-    // Initialize logger if available (optional, but good practice)
-    if ( class_exists('\Weebunz\Logger') ) {
+    // Initialize logger if available
+    if ( class_exists( '\Weebunz\Logger' ) ) {
         \Weebunz\Logger::init();
         \Weebunz\Logger::info( 'Starting plugin activation...' );
     }
@@ -48,12 +43,9 @@ function activate_weebunz() {
     $install_result = \Weebunz\Installer::install();
 
     if ( ! $install_result ) {
-        // Log the error if logger exists
-        if ( class_exists('\Weebunz\Logger') ) {
+        if ( class_exists( '\Weebunz\Logger' ) ) {
             \Weebunz\Logger::error( 'Plugin activation failed during installation step.' );
         }
-        // Optionally, provide a user-friendly error message or prevent activation
-        // wp_die('WeeBunz plugin activation failed. Please check logs.');
         return; // Stop activation if install failed
     }
 
@@ -62,9 +54,10 @@ function activate_weebunz() {
     wp_mkdir_p( $u['basedir'] . '/weebunz/temp' );
     wp_mkdir_p( $u['basedir'] . '/weebunz/exports' );
 
+    // Flush rewrite rules
     flush_rewrite_rules();
 
-    if ( class_exists('\Weebunz\Logger') ) {
+    if ( class_exists( '\Weebunz\Logger' ) ) {
         \Weebunz\Logger::info( 'Plugin activation completed successfully' );
     }
 }
@@ -73,11 +66,11 @@ function activate_weebunz() {
  * Deactivation handler
  */
 function deactivate_weebunz() {
-    if ( class_exists('\Weebunz\Logger') ) {
+    if ( class_exists( '\Weebunz\Logger' ) ) {
         \Weebunz\Logger::info( 'Starting plugin deactivation...' );
     }
     flush_rewrite_rules();
-    if ( class_exists('\Weebunz\Logger') ) {
+    if ( class_exists( '\Weebunz\Logger' ) ) {
         \Weebunz\Logger::info( 'Plugin deactivation completed successfully' );
     }
 }
@@ -85,13 +78,16 @@ function deactivate_weebunz() {
 register_activation_hook(   __FILE__, 'activate_weebunz' );
 register_deactivation_hook( __FILE__, 'deactivate_weebunz' );
 
-// Early textdomain
+// Early textdomain load
 add_action( 'plugins_loaded', function() {
-    load_plugin_textdomain( 'weebunz-core', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+    load_plugin_textdomain(
+        'weebunz-core',
+        false,
+        dirname( plugin_basename( __FILE__ ) ) . '/languages/'
+    );
 }, 5 );
 
-// Boot the plugin
+// Boot the core
 add_action( 'plugins_loaded', function() {
     \Weebunz\WeeBunz::get_instance()->run();
 }, 20 );
-
