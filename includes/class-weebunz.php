@@ -1,58 +1,75 @@
 <?php
 namespace Weebunz;
-if ( ! defined( 'ABSPATH' ) ) exit;
 
+use Weebunz\Loader;
+use Weebunz\Weebunz_Admin;
+use Weebunz\Weebunz_Public;
+use Weebunz\Installer;
+use Weebunz\Logger;
+
+/**
+ * Core singleton.
+ */
 class WeeBunz {
-    private static $instance = null;
-    private $loader;
-    private $admin;
-    private $public;
+    /** @var Loader */
+    protected $loader;
 
+    /**
+     * Constructor (private—use get_instance()).
+     */
     private function __construct() {
         $this->load_dependencies();
         $this->define_admin_hooks();
         $this->define_public_hooks();
     }
 
-    public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
+    /**
+     * Require all of the class files we need.
+     */
     private function load_dependencies() {
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
-        require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-public.php';
+        // ALWAYS fully-qualify the constant so PHP knows to look in the global namespace
+        require_once \WEEBUNZ_PLUGIN_DIR . 'includes/class-logger.php';
+        require_once \WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-loader.php';
+        require_once \WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-installer.php';
+        require_once \WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-public.php';
+        require_once \WEEBUNZ_PLUGIN_DIR . 'admin/class-weebunz-admin.php';
 
-        // WeeBunz_Loader is in the global namespace
-        $this->loader = new \WeeBunz_Loader();
-        
-        // WeeBunz_Admin is in the global namespace
-        $this->admin = new \WeeBunz_Admin('weebunz-core', WEEBUNZ_VERSION);
-        
-        // WeeBunz_Public is in the Weebunz namespace (same as current class)
-        $this->public = new WeeBunz_Public('weebunz-core', WEEBUNZ_VERSION);
+        $this->loader = new Loader();
     }
 
+    /**
+     * Register all of the admin-side hooks.
+     */
     private function define_admin_hooks() {
-        // enqueue assets
-        $this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_styles' );
-        $this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_scripts' );
-
-        // **FIX**: register menu & settings
-        $this->loader->add_action( 'admin_menu', $this->admin, 'add_admin_menu' );
-        $this->loader->add_action( 'admin_init', $this->admin, 'register_settings' );
+        $admin = new WeeBunz_Admin( $this->loader );
+        $admin->run();
     }
 
+    /**
+     * Register all of the public-side hooks.
+     */
     private function define_public_hooks() {
-        $this->loader->add_action( 'wp_enqueue_scripts', $this->public, 'enqueue_styles' );
-        $this->loader->add_action( 'wp_enqueue_scripts', $this->public, 'enqueue_scripts' );
-        $this->loader->add_action( 'init',           $this->public, 'init' );
+        $public = new WeeBunz_Public( $this->loader );
+        $public->run();
     }
 
+    /**
+     * Kick everything off.
+     */
     public function run() {
         $this->loader->run();
+    }
+
+    /**
+     * Get the singleton.
+     *
+     * @return WeeBunz
+     */
+    public static function get_instance() {
+        static $instance = null;
+        if ( null === $instance ) {
+            $instance = new self();
+        }
+        return $instance;
     }
 }
