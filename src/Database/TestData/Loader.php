@@ -1,16 +1,19 @@
 <?php
 namespace Weebunz\Database\TestData;
 
-use wpdb;
-
+/**
+ * Class Loader
+ *
+ * Programmatically loads all test-data SQL files in this directory.
+ */
 class Loader {
     /**
-     * Load all test-data SQL scripts in src/Database/TestData/
+     * Execute every .sql file in this folder.
      *
-     * @param wpdb $wpdb The global wpdb instance.
+     * @param \wpdb $wpdb The WPDB instance.
      */
-    public static function load( wpdb $wpdb ) {
-        // Find every .sql file in this directory
+    public static function load( \wpdb $wpdb ) {
+        // Grab every .sql file in this directory
         foreach ( glob( __DIR__ . '/*.sql' ) as $file ) {
             $sql = file_get_contents( $file );
             if ( ! empty( $sql ) ) {
