@@ -5,8 +5,7 @@
     "license": "proprietary",
     "autoload": {
         "psr-4": {
-            "Weebunz\\": "includes/",
-            "Weebunz\\Admin\\": "admin/"
+            "Weebunz\\\\": "src/"
         }
     },
     "authors": [
