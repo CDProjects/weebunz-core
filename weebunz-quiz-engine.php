@@ -2,47 +2,38 @@
 /**
  * Plugin Name:     WeeBunz Quiz Engine
  * Plugin URI:      https://weebunz.com
- * Description:     A high-performance quiz engine optimized for Kinsta hosting with support for hundreds to thousands of concurrent users
- * Version:         1.0.0
+ * Description:     A high-performance quiz engine optimized for concurrent users.
+ * Version:         1.1.0
  * Author:          WeeBunz Team
  * Text Domain:     weebunz-quiz-engine
  * Domain Path:     /languages
  */
 
-// Abort if called directly.
-if ( ! defined( 'WPINC' ) ) {
-    die;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // abort if called directly
 }
 
-// Load the core library
-require_once __DIR__ . '/weebunz-core.php';
+// 1) Define the plugin directory for convenience
+define( 'WEEBUNZ_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'WEEBUNZ_VERSION', '1.1.0' );
 
-// Quiz‐engine constants
-if ( ! defined( 'WEEBUNZ_QUIZ_VERSION' ) ) {
-    define( 'WEEBUNZ_QUIZ_VERSION', '1.0.0' );
-}
-if ( ! defined( 'WEEBUNZ_QUIZ_PLUGIN_BASENAME' ) ) {
-    define( 'WEEBUNZ_QUIZ_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+// 2) Load Composer’s PSR-4 autoloader
+$autoloader = WEEBUNZ_PLUGIN_DIR . 'vendor/autoload.php';
+if ( file_exists( $autoloader ) ) {
+    require_once $autoloader;
+} else {
+    trigger_error( 'Weebunz Quiz Engine: Autoloader not found.', E_USER_ERROR );
+    return;
 }
 
-// Activation & Deactivation
-function activate_weebunz_quiz_engine() {
-    require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-activator.php';
-    WeeBunz_Activator::activate();
+// 3) Register deactivation hook via your PSR-4 Deactivator
+if ( class_exists( \Weebunz\Setup\Deactivator::class ) ) {
+    register_deactivation_hook( __FILE__, [ \Weebunz\Setup\Deactivator::class, 'deactivate' ] );
 }
-register_activation_hook( __FILE__, 'activate_weebunz_quiz_engine' );
 
-function deactivate_weebunz_quiz_engine() {
-    require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-deactivator.php';
-    WeeBunz_Deactivator::deactivate();
+// 4) Bootstrap the plugin
+if ( class_exists( \Weebunz\Core\WeeBunz::class ) ) {
+    \Weebunz\Core\WeeBunz::get_instance()->run();
+} else {
+    trigger_error( 'Weebunz Quiz Engine: Core class not found.', E_USER_ERROR );
 }
-register_deactivation_hook( __FILE__, 'deactivate_weebunz_quiz_engine' );
-
-// Bootstrap the Quiz Engine
-require_once WEEBUNZ_PLUGIN_DIR . 'includes/class-weebunz-quiz-engine.php';
-
-function run_weebunz_quiz_engine() {
-    $plugin = new WeeBunz_Quiz_Engine();
-    $plugin->run();
-}
-run_weebunz_quiz_engine();
