@@ -1,14 +1,11 @@
 <?php
-// Original working version from before plugin deletion
-// Location: wp-content/plugins/weebunz-core/admin/class-quiz-ajax.php
+namespace Weebunz\Admin\Ajax;
 
-namespace Weebunz\Admin;
-
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Abort if called directly
 }
 
-class Quiz_Ajax {
+class QuizAjax {
     private $wpdb;
 
     public function __construct() {
