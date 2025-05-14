@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // abort if called directly
 }
 
-class WeeBunz_Admin {
+class WeeBunzAdmin {
 
     private $plugin_name;
     private $version;

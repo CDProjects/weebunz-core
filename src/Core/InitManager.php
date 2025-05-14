@@ -1,5 +1,4 @@
 <?php
-// wp-content/plugins/weebunz-core/includes/class-init-manager.php
 
 namespace Weebunz\Core;
 
@@ -7,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Init_Manager {
+class InitManager {
     private $required_directories = [
         'weebunz',
         'weebunz/temp',
