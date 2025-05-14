@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WeeBunz_Tester {
+class WeebunzTester {
     private $wpdb;
     private $results = [];
     private $expected_tables = [
