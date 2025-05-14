@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 use Weebunz\Logger;
 
-class Payment_Manager {
+class PaymentManager {
     private $wpdb;
     private $user_id;
     private $weekly_spend_limit;
@@ -18,7 +18,7 @@ class Payment_Manager {
         $this->user_id = $user_id;
         $this->weekly_spend_limit = get_option('weebunz_weekly_spend_limit', 35);
 
-        Logger::debug('Payment_Manager initialized', [
+        Logger::debug('PaymentManager initialized', [
             'user_id' => $this->user_id,
             'weekly_spend_limit' => $this->weekly_spend_limit
         ]);
