@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
  * 
  * Handles deployment configuration for Kinsta hosting
  */
-class Kinsta_Deployment_Manager {
+class KinstaDeploymentManager {
     private static $instance = null;
     
     /**
