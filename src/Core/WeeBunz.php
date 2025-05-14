@@ -55,7 +55,7 @@ class WeeBunz {
     private function define_public_hooks() {
         $this->loader->add_action( "wp_enqueue_scripts", $this->public_handler, "enqueue_styles" );
         $this->loader->add_action( "wp_enqueue_scripts", $this->public_handler, "enqueue_scripts" );
-        $this->loader->add_action( "init", $this->public_handler, "init_shortcodes" ); // Renamed for clarity
+        $this->loader->add_action( 'init', $this->public_handler, 'register_shortcodes' ); // Renamed for clarity
         
         // Add other public hooks as needed, e.g., for REST API endpoints
         // $this->loader->add_action( "rest_api_init", $this->public_handler, "register_rest_routes" );
