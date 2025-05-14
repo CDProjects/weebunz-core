@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
  * 
  * Simulates concurrent users for testing
  */
-class Load_Testing_Tool {
+class LoadTestingTool {
     private static $instance = null;
     private $results = [];
     private $test_running = false;
