@@ -31,31 +31,33 @@ if ( class_exists( \Weebunz\Setup\Deactivator::class ) ) {
     register_deactivation_hook( __FILE__, [ \Weebunz\Setup\Deactivator::class, 'deactivate' ] );
 }
 
-// 4) DEBUGGING PSR-4 + CLASS LOADING
+// 4) DEBUGGING PSR-4 + CLASS LOADING (corrected)
 
 // Load the raw PSR-4 map that Composer produced
 $psr4 = require WEEBUNZ_PLUGIN_DIR . 'vendor/composer/autoload_psr4.php';
 
-// What mapping do we have for the "Weebunz\" prefix?
-$mapping = isset( $psr4['Weebunz\\\\'] ) ? $psr4['Weebunz\\\\'] : null;
-error_log( 'Weebunz PSR-4 mapping: ' . var_export( $mapping, true ) );
+// 4a) Show all registered PSR-4 prefixes
+$prefixes = array_keys( $psr4 );
+error_log( 'Registered PSR-4 prefixes: ' . implode( ', ', $prefixes ) );
 
-// Where PSR-4 says the files live (should point to ".../src")
-if ( is_array( $mapping ) && isset( $mapping[0] ) ) {
-    $expected_src = $mapping[0];
-    error_log( 'Expecting Core class at: ' . $expected_src . '/Core/WeeBunz.php' );
+// 4b) Now look specifically for our namespace
+$ns = 'Weebunz\\';
+if ( isset( $psr4[ $ns ] ) ) {
+    $mapping = $psr4[ $ns ];
+    error_log( "Found mapping for \"$ns\": " . var_export( $mapping, true ) );
 
-    // Does that file actually exist on disk?
-    if ( file_exists( $expected_src . '/Core/WeeBunz.php' ) ) {
-        error_log( 'Core file FOUND on disk.' );
-    } else {
-        error_log( 'Core file NOT found where PSR-4 says it should be.' );
-    }
+    // Check the expected file location
+    $expected = $mapping[0] . '/Core/WeeBunz.php';
+    error_log( "Expecting Core class at: $expected" );
+    error_log( file_exists( $expected )
+        ? 'Core file FOUND on disk.'
+        : 'Core file NOT found where PSR-4 says it should be.'
+    );
 } else {
-    error_log( 'No PSR-4 entry for "Weebunz\\" namespace.' );
+    error_log( "No PSR-4 entry for namespace \"$ns\"." );
 }
 
-// Finally, check class_exists
+// 4c) Finally, check class_exists
 if ( class_exists( \Weebunz\Core\WeeBunz::class ) ) {
     error_log( 'Class \\Weebunz\\Core\\WeeBunz FOUND by autoloader!' );
     \Weebunz\Core\WeeBunz::get_instance()->run();
