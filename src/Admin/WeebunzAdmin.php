@@ -4,6 +4,12 @@
  *
  * @since      1.0.0
  */
+namespace Weebunz\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // abort if called directly
+}
+
 class WeeBunz_Admin {
 
     private $plugin_name;
