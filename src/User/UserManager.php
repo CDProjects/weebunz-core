@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 use Weebunz\Logger;
 
-class User_Manager {
+class UserManager {
     private $wpdb;
     private $weekly_spend_limit;
 
