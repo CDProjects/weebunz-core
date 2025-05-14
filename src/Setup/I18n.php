@@ -7,7 +7,7 @@
  *
  * @since      1.0.0
  */
-class WeeBunz_i18n {
+class I18n {
 
     /**
      * Load the plugin text domain for translation.
