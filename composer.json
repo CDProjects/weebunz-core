@@ -4,10 +4,10 @@
     "type": "wordpress-plugin",
     "license": "proprietary",
     "autoload": {
-        "psr-4": {
-            "Weebunz\\\\": "src/"
-        }
-    },
+  "psr-4": {
+    "Weebunz\\": "src/"
+  }
+},
     "authors": [
         {
             "name": "Casey Dent",
