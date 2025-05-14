@@ -12,7 +12,7 @@ use Weebunz\Quiz\Quiz_Validator;
 use Weebunz\Quiz\Quiz_Entry;
 use Weebunz\Logger;
 
-class Quiz_Test_Suite {
+class QuizTestSuite {
     private $quiz_manager;
     private $quiz_validator;
     private $test_results = [];
