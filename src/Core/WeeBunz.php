@@ -6,7 +6,7 @@ if ( ! defined( "ABSPATH" ) ) exit;
 // These will be autoloaded by Composer
 // use Weebunz\Core\Loader;
 // use Weebunz\Admin\Admin;
-// use Weebunz\Public\PublicPage; // Assuming Public.php contains class PublicPage or similar
+// use Weebunz\Public\PublicHooks; // Assuming Public.php contains class PublicHooks or similar
 
 class WeeBunz {
     private static $instance = null;
