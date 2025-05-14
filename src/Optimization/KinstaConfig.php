@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
  * 
  * Handles Kinsta-specific configurations and optimizations
  */
-class Kinsta_Config {
+class KinstaConfig {
     private static $instance = null;
     private $is_kinsta = false;
     private $redis_enabled = false;
