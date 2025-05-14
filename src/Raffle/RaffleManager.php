@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 use Weebunz\Logger;
 
-class Raffle_Manager {
+class RaffleManager {
     private $wpdb;
     private $user_id;
     private $phone_answer_timeout;
