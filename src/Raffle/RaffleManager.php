@@ -1,7 +1,7 @@
 <?php
 namespace Weebunz\Raffle;
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
@@ -13,61 +13,58 @@ class RaffleManager {
     private $phone_answer_timeout;
     private $winner_question_timeout;
 
-    public function __construct($user_id = null) {
+    public function __construct( $user_id = null ) {
         global $wpdb;
-        $this->wpdb = $wpdb;
-        $this->user_id = $user_id;
-        $this->phone_answer_timeout = get_option('weebunz_phone_answer_timeout', 30);
-        $this->winner_question_timeout = get_option('weebunz_winner_question_timeout', 30);
+        $this->wpdb                   = $wpdb;
+        $this->user_id                = $user_id;
+        $this->phone_answer_timeout   = get_option( 'weebunz_phone_answer_timeout', 30 );
+        $this->winner_question_timeout = get_option( 'weebunz_winner_question_timeout', 60 );
 
-        Logger::debug('Raffle_Manager initialized', [
-            'user_id' => $this->user_id,
-            'phone_timeout' => $this->phone_answer_timeout,
-            'question_timeout' => $this->winner_question_timeout
-        ]);
+        Logger::debug( 'RaffleManager initialized', [
+            'user_id'                => $this->user_id,
+            'phone_answer_timeout'   => $this->phone_answer_timeout,
+            'winner_question_timeout'=> $this->winner_question_timeout,
+        ] );
     }
 
     /**
      * Create a new raffle event
      */
-    public function create_raffle_event($data) {
+    public function create_raffle_event( $data ) {
         try {
-            Logger::info('Creating new raffle event', [
-                'title' => $data['title'],
-                'is_live' => !empty($data['is_live_event'])
-            ]);
+            Logger::info( 'Creating new raffle event', [
+                'title'    => $data['title'],
+                'is_live'  => ! empty( $data['is_live_event'] ),
+            ] );
 
             $table = $this->wpdb->prefix . 'raffle_events';
-            
             $raffle_data = [
-                'title' => sanitize_text_field($data['title']),
-                'prize_description' => wp_kses_post($data['prize_description']),
-                'is_live_event' => !empty($data['is_live_event']),
-                'event_date' => $data['event_date'],
-                'status' => 'scheduled',
-                'entry_limit' => isset($data['entry_limit']) ? intval($data['entry_limit']) : 200
+                'title'             => sanitize_text_field( $data['title'] ),
+                'prize_description' => wp_kses_post( $data['prize_description'] ),
+                'is_live_event'     => ! empty( $data['is_live_event'] ),
+                'event_date'        => $data['event_date'],
+                'status'            => 'scheduled',
+                'entry_limit'       => isset( $data['entry_limit'] ) ? intval( $data['entry_limit'] ) : 200,
             ];
 
-            $result = $this->wpdb->insert($table, $raffle_data);
-            
-            if ($result === false) {
-                throw new \Exception('Failed to create raffle event');
+            $result = $this->wpdb->insert( $table, $raffle_data );
+            if ( $result === false ) {
+                throw new \Exception( 'Failed to create raffle event' );
             }
 
             $raffle_id = $this->wpdb->insert_id;
-            
-            Logger::info('Raffle event created successfully', [
-                'raffle_id' => $raffle_id,
-                'entry_limit' => $raffle_data['entry_limit']
-            ]);
+            Logger::info( 'Raffle event created successfully', [
+                'raffle_id'  => $raffle_id,
+                'entry_limit'=> $raffle_data['entry_limit'],
+            ] );
 
             return $raffle_id;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
                 'context' => 'create_raffle_event',
-                'data' => $data
-            ]);
+                'data'    => $data,
+            ] );
             throw $e;
         }
     }
@@ -75,92 +72,80 @@ class RaffleManager {
     /**
      * Add entries to a raffle
      */
-    public function add_entries($raffle_id, $entries_data) {
+    public function add_entries( $raffle_id, $entries_data ) {
         try {
-            Logger::info('Adding entries to raffle', [
-                'raffle_id' => $raffle_id,
-                'entry_count' => count($entries_data)
-            ]);
+            Logger::info( 'Adding entries to raffle', [
+                'raffle_id'  => $raffle_id,
+                'entry_count'=> count( $entries_data ),
+            ] );
 
             $entries_table = $this->wpdb->prefix . 'raffle_entries';
-            $raffle_table = $this->wpdb->prefix . 'raffle_events';
+            $raffle_table  = $this->wpdb->prefix . 'raffle_events';
 
             // Get raffle details
-            $raffle = $this->wpdb->get_row(
+            $raffle = $this->wpdb->get_row( 
                 $this->wpdb->prepare(
                     "SELECT * FROM $raffle_table WHERE id = %d",
                     $raffle_id
                 )
             );
-
-            if (!$raffle || $raffle->status !== 'scheduled') {
-                Logger::warning('Invalid raffle status for adding entries', [
+            if ( ! $raffle || $raffle->status !== 'scheduled' ) {
+                Logger::warning( 'Invalid raffle status for adding entries', [
                     'raffle_id' => $raffle_id,
-                    'status' => $raffle ? $raffle->status : 'not found'
-                ]);
+                    'status'    => $raffle ? $raffle->status : 'not found',
+                ] );
                 return false;
             }
 
-            // Get current entry count
-            $current_entries = $this->wpdb->get_var(
+            // Check limits
+            $current_entries = intval( $this->wpdb->get_var(
                 $this->wpdb->prepare(
                     "SELECT COUNT(*) FROM $entries_table WHERE raffle_id = %d",
                     $raffle_id
                 )
-            );
-
-            // Check entry limit
+            ) );
             $remaining_slots = $raffle->entry_limit - $current_entries;
-            if ($remaining_slots <= 0) {
-                Logger::warning('Raffle entry limit reached', [
+            if ( $remaining_slots <= 0 ) {
+                Logger::warning( 'Raffle entry limit reached', [
                     'raffle_id' => $raffle_id,
-                    'limit' => $raffle->entry_limit
-                ]);
+                    'limit'     => $raffle->entry_limit,
+                ] );
                 return false;
             }
 
-            // Insert entries
             $success = true;
-            $entries_added = 0;
-            foreach ($entries_data as $entry) {
-                if ($remaining_slots <= 0) break;
-
+            foreach ( $entries_data as $entry ) {
                 $entry_data = [
-                    'raffle_id' => $raffle_id,
-                    'user_id' => $this->user_id,
-                    'entry_number' => $this->generate_entry_number($raffle_id),
-                    'phone_number' => sanitize_text_field($entry['phone_number']),
-                    'source_type' => $entry['source_type'],
-                    'source_id' => $entry['source_id']
+                    'raffle_id'    => $raffle_id,
+                    'user_id'      => $this->user_id,
+                    'entry_number' => $this->generate_entry_number( $raffle_id ),
+                    'phone_number' => sanitize_text_field( $entry['phone_number'] ),
+                    'source_type'  => $entry['source_type'],
+                    'source_id'    => $entry['source_id'],
                 ];
-
-                $result = $this->wpdb->insert($entries_table, $entry_data);
-                if (!$result) {
-                    Logger::error('Failed to insert raffle entry', [
+                $res = $this->wpdb->insert( $entries_table, $entry_data );
+                if ( $res === false ) {
+                    Logger::error( 'Failed to insert raffle entry', [
                         'raffle_id' => $raffle_id,
-                        'entry_data' => $entry_data
-                    ]);
+                        'entry_data'=> $entry_data,
+                    ] );
                     $success = false;
                     break;
                 }
-
-                $entries_added++;
-                $remaining_slots--;
             }
 
-            Logger::info('Raffle entries added', [
-                'raffle_id' => $raffle_id,
-                'entries_added' => $entries_added,
-                'success' => $success
-            ]);
+            Logger::info( 'Entries added to raffle', [
+                'raffle_id'   => $raffle_id,
+                'entries_added' => $success ? count( $entries_data ) : 0,
+            ] );
 
             return $success;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
-                'context' => 'add_entries',
-                'raffle_id' => $raffle_id
-            ]);
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context'   => 'add_entries',
+                'raffle_id' => $raffle_id,
+            ] );
             return false;
         }
     }
@@ -168,49 +153,32 @@ class RaffleManager {
     /**
      * Start raffle draw process
      */
-    public function start_draw($raffle_id) {
+    public function start_draw( $raffle_id ) {
         try {
-            Logger::info('Starting raffle draw', ['raffle_id' => $raffle_id]);
+            Logger::info( 'Starting raffle draw', [ 'raffle_id' => $raffle_id ] );
 
-            $raffle_table = $this->wpdb->prefix . 'raffle_events';
+            $raffle_table  = $this->wpdb->prefix . 'raffle_events';
             $entries_table = $this->wpdb->prefix . 'raffle_entries';
 
-            // Update raffle status
+            // Activate the raffle
             $status_update = $this->wpdb->update(
                 $raffle_table,
-                ['status' => 'active'],
-                ['id' => $raffle_id]
+                [ 'status' => 'active' ],
+                [ 'id'     => $raffle_id ]
             );
-
-            if ($status_update === false) {
-                throw new \Exception('Failed to update raffle status');
+            if ( $status_update === false ) {
+                throw new \Exception( 'Failed to update raffle status' );
             }
 
-            // Get all entries
-            $entries = $this->wpdb->get_results(
-                $this->wpdb->prepare(
-                    "SELECT * FROM $entries_table WHERE raffle_id = %d",
-                    $raffle_id
-                )
-            );
+            // Optionally you could preload entries, etc.
 
-            $result = [
-                'total_entries' => count($entries),
-                'draw_ready' => true
-            ];
+            return true;
 
-            Logger::info('Raffle draw started', [
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context'   => 'start_draw',
                 'raffle_id' => $raffle_id,
-                'total_entries' => count($entries)
-            ]);
-
-            return $result;
-
-        } catch (\Exception $e) {
-            Logger::exception($e, [
-                'context' => 'start_draw',
-                'raffle_id' => $raffle_id
-            ]);
+            ] );
             throw $e;
         }
     }
@@ -218,68 +186,55 @@ class RaffleManager {
     /**
      * Draw a random entry
      */
-    public function draw_winner($raffle_id) {
+    public function draw_winner( $raffle_id ) {
         try {
-            Logger::info('Drawing raffle winner', ['raffle_id' => $raffle_id]);
+            Logger::info( 'Drawing raffle winner', [ 'raffle_id' => $raffle_id ] );
 
             $entries_table = $this->wpdb->prefix . 'raffle_entries';
-            $draws_table = $this->wpdb->prefix . 'raffle_draws';
+            $draws_table   = $this->wpdb->prefix . 'raffle_draws';
 
-            // Get random entry
+            // Pick a random entry
             $entry = $this->wpdb->get_row(
                 $this->wpdb->prepare(
-                    "SELECT * FROM $entries_table 
-                    WHERE raffle_id = %d 
-                    ORDER BY RAND() 
-                    LIMIT 1",
+                    "SELECT * FROM $entries_table WHERE raffle_id = %d ORDER BY RAND() LIMIT 1",
                     $raffle_id
                 )
             );
-
-            if (!$entry) {
-                Logger::error('No entries found for raffle', ['raffle_id' => $raffle_id]);
+            if ( ! $entry ) {
+                Logger::warning( 'No entries found for draw', [ 'raffle_id' => $raffle_id ] );
                 return false;
             }
 
-            // Get unused winner question
+            // Fetch a question to ask the winner (if applicable)
             $question = $this->get_unused_winner_question();
-            if (!$question) {
-                Logger::error('No available winner questions', ['raffle_id' => $raffle_id]);
-                return false;
-            }
 
-            // Record draw attempt
             $draw_data = [
-                'raffle_id' => $raffle_id,
-                'entry_id' => $entry->id,
-                'winner_question_id' => $question->id
+                'raffle_id'         => $raffle_id,
+                'entry_id'          => $entry->id,
+                'winner_question_id'=> $question ? $question->id : null,
+                'created_at'        => current_time( 'mysql' ),
             ];
 
-            $result = $this->wpdb->insert($draws_table, $draw_data);
-            
-            if ($result === false) {
-                throw new \Exception('Failed to record draw attempt');
+            $result = $this->wpdb->insert( $draws_table, $draw_data );
+            if ( $result === false ) {
+                throw new \Exception( 'Failed to record draw attempt' );
             }
 
             $draw_id = $this->wpdb->insert_id;
+            Logger::info( 'Winner drawn successfully', [
+                'raffle_id'  => $raffle_id,
+                'draw_id'    => $draw_id,
+                'entry_id'   => $entry->id,
+                'question_id'=> $question ? $question->id : null,
+            ] );
 
-            Logger::info('Winner drawn successfully', [
+            return $draw_id;
+
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context'   => 'draw_winner',
                 'raffle_id' => $raffle_id,
-                'draw_id' => $draw_id,
-                'entry_id' => $entry->id
-            ]);
-
-            return [
-                'draw_id' => $draw_id,
-                'entry' => $entry,
-                'question' => $question
-            ];
-
-        } catch (\Exception $e) {
-            Logger::exception($e, [
-                'context' => 'draw_winner',
-                'raffle_id' => $raffle_id
-            ]);
+            ] );
             return false;
         }
     }
@@ -287,73 +242,71 @@ class RaffleManager {
     /**
      * Record phone answer attempt
      */
-    public function record_phone_answer($draw_id, $answered) {
+    public function record_phone_answer( $draw_id, $answered ) {
         try {
-            Logger::info('Recording phone answer attempt', [
+            Logger::info( 'Recording phone answer attempt', [
                 'draw_id' => $draw_id,
-                'answered' => $answered
-            ]);
+                'answered'=> $answered,
+            ] );
 
             $table = $this->wpdb->prefix . 'raffle_draws';
-            
             $result = $this->wpdb->update(
                 $table,
                 [
-                    'phone_answer_time' => $answered ? time() : null,
-                    'updated_at' => current_time('mysql')
+                    'phone_answer_time' => $answered ? current_time( 'mysql' ) : null,
+                    'updated_at'        => current_time( 'mysql' ),
                 ],
-                ['id' => $draw_id]
+                [ 'id' => $draw_id ]
             );
 
-            if ($result === false) {
-                throw new \Exception('Failed to record phone answer');
+            if ( $result === false ) {
+                throw new \Exception( 'Failed to record phone answer' );
             }
 
             return true;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
                 'context' => 'record_phone_answer',
-                'draw_id' => $draw_id
-            ]);
+                'draw_id' => $draw_id,
+            ] );
             return false;
         }
     }
 
     /**
-     * Record winner question answer
+     * Record question-answer attempt
      */
-    public function record_question_answer($draw_id, $answer_time, $correct) {
+    public function record_question_answer( $draw_id, $answer_time, $correct ) {
         try {
-            Logger::info('Recording question answer', [
-                'draw_id' => $draw_id,
-                'answer_time' => $answer_time,
-                'correct' => $correct
-            ]);
+            Logger::info( 'Recording question answer', [
+                'draw_id'      => $draw_id,
+                'answer_time'  => $answer_time,
+                'correct'      => $correct,
+            ] );
 
             $table = $this->wpdb->prefix . 'raffle_draws';
-            
             $result = $this->wpdb->update(
                 $table,
                 [
                     'question_answer_time' => $answer_time,
-                    'answered_correctly' => $correct,
-                    'updated_at' => current_time('mysql')
+                    'answered_correctly'   => $correct,
+                    'updated_at'           => current_time( 'mysql' ),
                 ],
-                ['id' => $draw_id]
+                [ 'id' => $draw_id ]
             );
 
-            if ($result === false) {
-                throw new \Exception('Failed to record question answer');
+            if ( $result === false ) {
+                throw new \Exception( 'Failed to record question answer' );
             }
 
             return true;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
                 'context' => 'record_question_answer',
-                'draw_id' => $draw_id
-            ]);
+                'draw_id' => $draw_id,
+            ] );
             return false;
         }
     }
@@ -361,113 +314,113 @@ class RaffleManager {
     /**
      * Complete raffle event
      */
-    public function complete_raffle($raffle_id, $winner_entry_id = null) {
+    public function complete_raffle( $raffle_id, $winner_entry_id = null ) {
         try {
-            Logger::info('Completing raffle event', [
-                'raffle_id' => $raffle_id,
-                'winner_entry_id' => $winner_entry_id
-            ]);
+            Logger::info( 'Completing raffle event', [
+                'raffle_id'       => $raffle_id,
+                'winner_entry_id' => $winner_entry_id,
+            ] );
 
             $table = $this->wpdb->prefix . 'raffle_events';
-            
             $result = $this->wpdb->update(
                 $table,
                 [
-                    'status' => 'completed',
+                    'status'          => 'completed',
                     'winner_entry_id' => $winner_entry_id,
-                    'completed_at' => current_time('mysql')
+                    'completed_at'    => current_time( 'mysql' ),
                 ],
-                ['id' => $raffle_id]
+                [ 'id' => $raffle_id ]
             );
 
-            if ($result === false) {
-                throw new \Exception('Failed to complete raffle');
+            if ( $result === false ) {
+                throw new \Exception( 'Failed to complete raffle' );
             }
 
             return true;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
-                'context' => 'complete_raffle',
-                'raffle_id' => $raffle_id
-            ]);
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context'    => 'complete_raffle',
+                'raffle_id'  => $raffle_id,
+            ] );
             return false;
         }
     }
 
     /**
-     * Generate unique entry number
+     * Generate a unique entry number
      */
-    private function generate_entry_number($raffle_id) {
+    private function generate_entry_number( $raffle_id ) {
         try {
             $table = $this->wpdb->prefix . 'raffle_entries';
-            
             do {
-                $number = mt_rand(10000, 99999);
-                $exists = $this->wpdb->get_var(
+                $number = mt_rand( 10000, 99999 );
+                $exists = intval( $this->wpdb->get_var(
                     $this->wpdb->prepare(
-                        "SELECT COUNT(*) FROM $table 
-                        WHERE raffle_id = %d AND entry_number = %d",
+                        "SELECT COUNT(*) FROM $table WHERE raffle_id = %d AND entry_number = %d",
                         $raffle_id,
                         $number
                     )
-                );
-            } while ($exists);
+                ) );
+            } while ( $exists );
 
-            Logger::debug('Generated entry number', [
-                'raffle_id' => $raffle_id,
-                'entry_number' => $number
-            ]);
+            Logger::debug( 'Generated entry number', [
+                'raffle_id'    => $raffle_id,
+                'entry_number' => $number,
+            ] );
 
             return $number;
 
-        } catch (\Exception $e) {
-            Logger::exception($e, [
-                'context' => 'generate_entry_number',
-                'raffle_id' => $raffle_id
-            ]);
-            throw $e;
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context'    => 'generate_entry_number',
+                'raffle_id'  => $raffle_id,
+            ] );
+            return null;
         }
     }
 
     /**
-     * Get unused winner question
+     * Pick an unused winner question
      */
     private function get_unused_winner_question() {
         try {
             $table = $this->wpdb->prefix . 'winner_questions_pool';
-            
             $question = $this->wpdb->get_row(
-                "SELECT * FROM $table 
-                WHERE used_count = 0 
-                OR last_used < DATE_SUB(NOW(), INTERVAL 1 MONTH) 
-                ORDER BY used_count ASC, RAND() 
-                LIMIT 1"
+                "SELECT * FROM $table
+                 WHERE used_count = 0
+                   OR last_used < DATE_SUB(NOW(), INTERVAL 1 MONTH)
+                 ORDER BY used_count ASC, RAND()
+                 LIMIT 1"
             );
 
-            if ($question) {
+            if ( $question ) {
                 $update_result = $this->wpdb->update(
                     $table,
                     [
                         'used_count' => $question->used_count + 1,
-                        'last_used' => current_time('mysql')
+                        'last_used'  => current_time( 'mysql' ),
                     ],
-                    ['id' => $question->id]
+                    [ 'id' => $question->id ]
                 );
-
-                if ($update_result === false) {
-                    throw new \Exception('Failed to update question usage count');
+                if ( $update_result === false ) {
+                    throw new \Exception( 'Failed to update question usage count' );
                 }
-
-                Logger::debug('Retrieved winner question', [
+                Logger::debug( 'Retrieved winner question', [
                     'question_id' => $question->id,
-                    'used_count' => $question->used_count + 1
-                ]);
+                    'used_count'  => $question->used_count + 1,
+                ] );
             } else {
-                Logger::warning('No available winner questions found');
+                Logger::warning( 'No available winner questions found' );
             }
 
             return $question;
 
-        } catch (\Exception $e) {
-            Logger::exception($e,
+        } catch ( \Exception $e ) {
+            Logger::exception( $e, [
+                'context' => 'get_unused_winner_question',
+            ] );
+            return null;
+        }
+    }
+}
