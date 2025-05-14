@@ -5,7 +5,7 @@ use Weebunz\Util\Logger;
 
 if ( ! defined( "ABSPATH" ) ) exit;
 
-class Public {
+class PublicHooks {
 
     private $plugin_name;
     private $version;
