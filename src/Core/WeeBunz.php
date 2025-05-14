@@ -36,7 +36,7 @@ class WeeBunz {
         // Assuming Admin.php contains class Admin within namespace Weebunz\Admin
         $this->admin_handler  = new \Weebunz\Admin\Admin( "weebunz-quiz-engine", WEEBUNZ_VERSION ); 
         // Assuming Public.php contains class Public within namespace Weebunz\Public
-        $this->public_handler = new \Weebunz\Public\Public( "weebunz-quiz-engine", WEEBUNZ_VERSION ); 
+        $this->public_handler = new \Weebunz\Public\PublicHooks( "weebunz-quiz-engine", WEEBUNZ_VERSION ); 
     }
 
     private function define_admin_hooks() {
