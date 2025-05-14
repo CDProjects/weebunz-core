@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Test_User_Creator {
+class TestUserCreator {
     private $test_users = [
         [
             'user_login' => 'testuser1',
