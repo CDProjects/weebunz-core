@@ -5,9 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 /**
- * WeeBunz Quiz Engine Activator
+ * WeeBunz Quiz Engine Deactivator
  *
- * This class defines all code necessary to run during the plugin's activation.
+ * This class defines all code necessary to run during the plugin's deactivation.
  *
  * @since      1.0.0
  */
@@ -147,16 +147,16 @@ class Deactivator {
             KEY idx_entry_count (entry_count)
         ) $charset_collate;";
         
-        // Include WordPress database upgrade functions
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        // Include WP upgrade functions
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
         
         // Create tables
-        dbDelta($sql_quizzes);
-        dbDelta($sql_questions);
-        dbDelta($sql_answers);
-        dbDelta($sql_sessions);
-        dbDelta($sql_user_answers);
-        dbDelta($sql_raffle_entries);
+        dbDelta( $sql_quizzes );
+        dbDelta( $sql_questions );
+        dbDelta( $sql_answers );
+        dbDelta( $sql_sessions );
+        dbDelta( $sql_user_answers );
+        dbDelta( $sql_raffle_entries );
     }
     
     /**
@@ -165,28 +165,38 @@ class Deactivator {
     private static function initialize_settings() {
         // Default settings
         $default_settings = array(
-            'quiz_time_limit' => 60, // Default time limit in seconds
-            'points_per_question' => 1,
-            'enable_raffle_entries' => 'yes',
-            'entries_per_correct_answer' => 1,
-            'enable_redis_cache' => 'yes',
-            'redis_host' => '127.0.0.1',
-            'redis_port' => 6379,
-            'redis_auth' => '',
-            'redis_db' => 0,
-            'session_expiry' => 3600, // 1 hour
-            'rate_limit_enabled' => 'yes',
-            'rate_limit_requests' => 100,
-            'rate_limit_window' => 60, // 1 minute
-            'concurrent_users_limit' => 1000,
-            'db_connection_pool_size' => 50,
-            'enable_background_processing' => 'yes',
-            'log_level' => 'error', // error, warning, info, debug
+            'quiz_time_limit'          => 60,
+            'points_per_question'      => 1,
+            'enable_raffle_entries'    => 'yes',
+            'entries_per_correct_answer'=> 1,
+            'enable_redis_cache'       => 'yes',
+            'redis_host'               => '127.0.0.1',
+            'redis_port'               => 6379,
+            'redis_auth'               => '',
+            'redis_db'                 => 0,
+            'session_expiry'           => 3600,
+            'rate_limit_enabled'       => 'yes',
+            'rate_limit_requests'      => 100,
+            'rate_limit_window'        => 60,
+            'concurrent_users_limit'   => 1000,
+            'db_connection_pool_size'  => 50,
+            'enable_background_processing'=> 'yes',
+            'log_level'                => 'error',
         );
         
-        // Save default settings
-        foreach ($default_settings as $key => $value) {
-            update_option('weebunz_quiz_' . $key, $value);
+        foreach ( $default_settings as $key => $value ) {
+            update_option( 'weebunz_quiz_' . $key, $value );
         }
+    }
+
+    /**
+     * Fired when the plugin is deactivated.
+     *
+     * @since 1.1.0
+     */
+    public static function deactivate() {
+        // Example cleanup (uncomment if needed):
+        // wp_clear_scheduled_hook( 'weebunz_quiz_background_process' );
+        // flush_rewrite_rules();
     }
 }
