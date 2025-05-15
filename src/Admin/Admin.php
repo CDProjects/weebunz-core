@@ -50,10 +50,16 @@ class Admin { // Changed class name to match filename for PSR-4
      *
      * @since    1.0.0
      */
-    public function enqueue_styles() {
-        wp_enqueue_style($this->plugin_name . "-admin", WEEBUNZ_PLUGIN_URL . "admin/css/weebunz-admin.css", array(), $this->version, "all");
-    }
-
+        public function enqueue_styles() {
+            wp_enqueue_style(
+                $this->plugin_name . '-admin',
+                \WEEBUNZ_PLUGIN_URL . 'admin/css/weebunz-admin.css',
+                [],               // no dependencies
+                $this->version,   // plugin version constant
+                'all'             // media
+            );
+        }
+        
     /**
      * Register the JavaScript for the admin area.
      *

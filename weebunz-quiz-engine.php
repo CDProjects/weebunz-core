@@ -17,6 +17,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'WEEBUNZ_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WEEBUNZ_VERSION', '1.1.0' );
 
+if ( ! defined( 'WEEBUNZ_PLUGIN_URL' ) ) {
+    define(
+        'WEEBUNZ_PLUGIN_URL',
+        plugin_dir_url( __FILE__ )
+    );
+}
+
 // 2) Load Composer’s PSR-4 autoloader
 $autoloader = WEEBUNZ_PLUGIN_DIR . 'vendor/autoload.php';
 if ( file_exists( $autoloader ) ) {
