@@ -1,4 +1,9 @@
 <?php
+namespace Weebunz\Setup;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 /**
  * WeeBunz Quiz Engine Activator
  *
@@ -6,7 +11,7 @@
  *
  * @since      1.0.0
  */
-class WeeBunz_Activator {
+class Deactivator {
 
     /**
      * Create necessary database tables and initialize plugin settings
