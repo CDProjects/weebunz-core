@@ -203,8 +203,8 @@
           "Button disabled state before:",
           $startButton.prop("disabled")
         );
-
-        $startButton.prop("disabled", false);
+        
+        console.log("Button disabled state before:", $startButton.prop("disabled"));
 
         console.log(
           "Button disabled state after:",
