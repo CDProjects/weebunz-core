@@ -22,8 +22,8 @@ try {
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}questions_pool'");
     
     if ($table_exists) {
-        $questions = $wpdb->get_results($wpdb->prepare("
-            SELECT qp.*, COUNT(qa.id) as answer_count
+        $questions = $wpdb->get_results($wpdb->prepare(
+            "SELECT qp.*, COUNT(qa.id) as answer_count
             FROM {$wpdb->prefix}questions_pool qp
             LEFT JOIN {$wpdb->prefix}question_answers qa ON qp.id = qa.question_id
             GROUP BY qp.id
@@ -43,19 +43,25 @@ $total_pages = ceil($total_questions / $per_page);
 $categories = [];
 try {
     if ($table_exists) {
-        $categories = $wpdb->get_results("
-            SELECT DISTINCT category FROM {$wpdb->prefix}questions_pool WHERE category IS NOT NULL
-        ");
+        $categories = $wpdb->get_results(
+            "SELECT DISTINCT category FROM {$wpdb->prefix}questions_pool WHERE category IS NOT NULL"
+        );
     }
 } catch (Exception $e) {
     // Do nothing
 }
 
+// Base admin URL for this page
+$base_admin = admin_url('admin.php');
+
 ?>
 
 <div class="wrap">
     <h1 class="wp-heading-inline"><?php echo esc_html(get_admin_page_title()); ?></h1>
-    <a href="<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions&action=new'); ?>" class="page-title-action">Add New Question</a>
+    <a href="<?php echo esc_url(add_query_arg([
+            'page'   => 'weebunz-quiz-engine-questions',
+            'action' => 'new',
+        ], $base_admin)); ?>" class="page-title-action">Add New Question</a>
     
     <hr class="wp-header-end">
 
@@ -128,20 +134,24 @@ try {
                         </td>
                         <td class="column-actions">
                             <div class="row-actions">
+                                <?php $edit_url = esc_url(add_query_arg([
+                                    'page'   => 'weebunz-quiz-engine-questions',
+                                    'action' => 'edit',
+                                    'id'     => $question->id,
+                                ], $base_admin)); ?>
                                 <span class="edit">
-                                    <a href="<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions&action=edit&id=' . $question->id); ?>">
-                                        Edit
-                                    </a> |
+                                    <a href="<?php echo $edit_url; ?>">Edit</a> |
                                 </span>
+                                <?php $ans_url = esc_url(add_query_arg([
+                                    'page'   => 'weebunz-quiz-engine-questions',
+                                    'action' => 'answers',
+                                    'id'     => $question->id,
+                                ], $base_admin)); ?>
                                 <span class="view-answers">
-                                    <a href="<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions&action=answers&id=' . $question->id); ?>">
-                                        View Answers
-                                    </a> |
+                                    <a href="<?php echo $ans_url; ?>">View Answers</a> |
                                 </span>
                                 <span class="delete">
-                                    <a href="#" class="delete-question" data-id="<?php echo $question->id; ?>">
-                                        Delete
-                                    </a>
+                                    <a href="#" class="delete-question" data-id="<?php echo $question->id; ?>">Delete</a>
                                 </span>
                             </div>
                         </td>
@@ -151,7 +161,10 @@ try {
                 <tr>
                     <td colspan="5">
                         <?php if ($table_exists): ?>
-                            No questions found. <a href="<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions&action=new'); ?>">Add your first question</a>.
+                            No questions found. <a href="<?php echo esc_url(add_query_arg([
+                                'page'   => 'weebunz-quiz-engine-questions',
+                                'action' => 'new',
+                            ], $base_admin)); ?>">Add your first question</a>.
                         <?php else: ?>
                             Questions table not found. Please run the database setup.
                         <?php endif; ?>
@@ -227,21 +240,19 @@ try {
 jQuery(document).ready(function($) {
     // Handle filters
     $('#category_filter, #difficulty_filter').on('change', function() {
-        var category = $('#category_filter').val();
+        var category = encodeURIComponent($('#category_filter').val());
         var difficulty = $('#difficulty_filter').val();
-        var url = '<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions'); ?>';
-        
-        if (category) url += '&category=' + encodeURIComponent(category);
+        var url = '<?php echo esc_js(add_query_arg([], $base_admin) . "&page=weebunz-quiz-engine-questions"); ?>';
+        if (category) url += '&category=' + category;
         if (difficulty) url += '&difficulty=' + difficulty;
-        
         window.location.href = url;
     });
 
     // Handle search
     $('#question-search').keypress(function(e) {
-        if (e.which == 13) { // Enter key
-            var searchTerm = $(this).val();
-            var url = '<?php echo admin_url('admin.php?page=weebunz-quiz-engine-questions'); ?>&s=' + encodeURIComponent(searchTerm);
+        if (e.which == 13) {
+            var searchTerm = encodeURIComponent($(this).val());
+            var url = '<?php echo esc_js(add_query_arg([], $base_admin) . "&page=weebunz-quiz-engine-questions"); ?>&s=' + searchTerm;
             window.location.href = url;
         }
     });
