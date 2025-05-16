@@ -259,7 +259,7 @@ class Admin { // Changed class name to match filename for PSR-4
 
     // Callback functions for displaying admin pages (partials)
     private function display_admin_partial($partial_name) {
-        $file_path = WEEBUNZ_PLUGIN_DIR . "admin/partials/" . $partial_name . ".php";
+        $file_path = WEEBUNZ_PLUGIN_DIR . 'src/Admin/Partials/' . $partial_name . '.php';
         if (file_exists($file_path)) {
             include_once $file_path;
         } else {
