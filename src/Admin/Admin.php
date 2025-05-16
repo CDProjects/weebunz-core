@@ -267,17 +267,18 @@ class Admin { // Changed class name to match filename for PSR-4
         }
     }
 
-    public function display_dashboard_page() { $this->display_admin_partial("weebunz-admin-dashboard"); }
-    public function display_quizzes_page() { $this->display_admin_partial("weebunz-admin-quizzes"); }
-    public function display_questions_page() { $this->display_admin_partial("weebunz-admin-questions"); }
-    public function display_results_page() { $this->display_admin_partial("weebunz-admin-results"); }
-    public function display_raffle_page() { $this->display_admin_partial("weebunz-admin-raffle"); }
-    public function display_members_page() { $this->display_admin_partial("weebunz-admin-members"); }
-    public function display_quiz_test_page() { $this->display_admin_partial("weebunz-admin-quiz-test"); }
-    public function display_settings_page() { $this->display_admin_partial("weebunz-admin-settings"); }
-    public function display_performance_page() { $this->display_admin_partial("weebunz-admin-performance"); }
-    public function display_tools_page() { $this->display_admin_partial("weebunz-admin-tools"); }
-    public function display_load_testing_page() { $this->display_admin_partial("weebunz-load-testing"); }
+    public function display_dashboard_page()    { $this->display_admin_partial( 'weebunz-admin-dashboard' ); }
+    public function display_quizzes_page()      { $this->display_admin_partial( 'quiz-management-page' ); }
+    public function display_questions_page()    { $this->display_admin_partial( 'questions-page' ); }
+    public function display_results_page()      { $this->display_admin_partial( 'results-page' ); }
+    public function display_raffle_page()       { $this->display_admin_partial( 'manage-raffles-page' ); }
+    public function display_members_page()      { $this->display_admin_partial( 'members-page' ); }
+    public function display_quiz_test_page()    { $this->display_admin_partial( 'quiz-test-page' ); }
+    public function display_settings_page()     { $this->display_admin_partial( 'settings-page' ); }
+    public function display_performance_page()  { $this->display_admin_partial( 'maintenance-page' ); }
+    public function display_tools_page()        { $this->display_admin_partial( 'weebunz-admin-tools' ); }
+    public function display_load_testing_page() { $this->display_admin_partial( 'weebunz-load-testing' ); }
+
     
     /**
      * Example AJAX handler for an admin action.
