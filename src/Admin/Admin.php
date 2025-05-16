@@ -68,7 +68,7 @@ class Admin { // Changed class name to match filename for PSR-4
     public function enqueue_scripts() {
         wp_enqueue_script($this->plugin_name . "-admin", WEEBUNZ_PLUGIN_URL . "admin/js/weebunz-admin.js", array("jquery"), $this->version, false);
         wp_enqueue_script($this->plugin_name . "-admin-quiz-components", WEEBUNZ_PLUGIN_URL . "admin/js/quiz-components.admin.js", array("jquery"), $this->version, false);
-
+        wp_enqueue_script($this->plugin_name . '-admin-quiz-test', WEEBUNZ_PLUGIN_URL . 'admin/js/quiz-test.admin.js', ['jquery'], $this->version, true);
         wp_localize_script($this->plugin_name . "-admin", "weebunz_admin_params", array(
             "ajax_url" => admin_url("admin-ajax.php"),
             "nonce" => wp_create_nonce("weebunz_admin_ajax_nonce"),
