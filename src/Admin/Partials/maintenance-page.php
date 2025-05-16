@@ -4,11 +4,12 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+use Weebunz\Database\DBManager;
 
 // Process update request
 if (isset($_POST['run_updates']) && check_admin_referer('weebunz_maintenance')) {
     try {
-        $db_manager = new \Weebunz\Database\DB_Manager();
+        $db_manager = new \Weebunz\Database\DBManager();
         $result = $db_manager->process_updates();
         
         if ($result) {
