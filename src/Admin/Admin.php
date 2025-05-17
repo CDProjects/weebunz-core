@@ -66,48 +66,41 @@ class Admin { // Changed class name to match filename for PSR-4
      * @since    1.0.0
      */
         public function enqueue_scripts() {
-            // Use un‐minified files in dev, .min in production
-            $suffix  = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-            $base_url = WEEBUNZ_PLUGIN_URL . 'admin/assets/js/';
-
-            // Main admin bundle
             wp_enqueue_script(
-                "{$this->plugin_name}-admin",
-                $base_url . "weebunz-admin{$suffix}.js",
-                [ 'jquery' ],
-                $this->version,
-                true
+                $this->plugin_name . "-admin", 
+                WEEBUNZ_PLUGIN_URL . "src/Admin/assets/js/weebunz-admin.js", 
+                array("jquery"), 
+                $this->version, 
+                false
             );
-
-            // Quiz-components bundle
+    
+            // Quiz component script
             wp_enqueue_script(
-                "{$this->plugin_name}-admin-quiz-components",
-                $base_url . "quiz-components.admin{$suffix}.js",
-                [ 'jquery' ],
-                $this->version,
-                true
+                $this->plugin_name . "-admin-quiz-components", 
+                WEEBUNZ_PLUGIN_URL . "src/Admin/assets/js/quiz-components.admin.js", 
+                array("jquery"), 
+                $this->version, 
+                false
             );
-
-            // Quiz-test bundle (attaches your Start-Quiz handler)
-            wp_enqueue_script(
-                "{$this->plugin_name}-admin-quiz-test",
-                $base_url . "quiz-test.admin{$suffix}.js",
-                [ 'jquery', 'react', 'react-dom' ],
-                $this->version,
-                true
-            );
-
-            // Provide AJAX/REST URLs & nonces to the quiz-test script
-            wp_localize_script(
-                "{$this->plugin_name}-admin-quiz-test",
-                'weebunzQuizTestParams',
-                [
-                    'ajax_url'   => admin_url( 'admin-ajax.php' ),
-                    'rest_root'  => esc_url_raw( rest_url() ),
-                    'rest_nonce' => wp_create_nonce( 'wp_rest' ),
-                    'text_domain'=> 'weebunz-quiz-engine',
-                ]
-            );
+    
+            // Quiz test script - only load on the test page
+            $screen = get_current_screen();
+            if (isset($screen->id) && strpos($screen->id, 'weebunz-quiz-engine-quiz-test') !== false) {
+                wp_enqueue_script(
+                    $this->plugin_name . '-admin-quiz-test', 
+                    WEEBUNZ_PLUGIN_URL . 'src/Admin/assets/js/quiz-test.admin.js', 
+                    array('jquery', $this->plugin_name . "-admin-quiz-components"), 
+                    $this->version, 
+                    true
+                );
+            }
+    
+            wp_localize_script($this->plugin_name . "-admin", "weebunz_admin_params", array(
+                "ajax_url" => admin_url("admin-ajax.php"),
+                "nonce" => wp_create_nonce("weebunz_admin_ajax_nonce"),
+                "text_domain" => "weebunz-quiz-engine",
+                "error_generic" => esc_html__("An error occurred. Please try again.", "weebunz-quiz-engine")
+            ));
         }
     /**
      * Add menu items to the admin dashboard
