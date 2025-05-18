@@ -101,6 +101,15 @@ class WeebunzAdmin {
                 true  // Load in footer
             );
             
+            // Load the API test script
+            wp_enqueue_script(
+                $this->plugin_name . '-admin-api-test', 
+                plugin_dir_url( __FILE__ ) . 'assets/js/api-test.js', 
+                array('jquery'), 
+                $this->version, 
+                true  // Load in footer
+            );
+            
             // Add localization for the quiz test script
             wp_localize_script(
                 $this->plugin_name . '-admin-quiz-test', 
@@ -117,6 +126,19 @@ class WeebunzAdmin {
                     )
                 )
             );
+            
+            // Debug output to help diagnose API issues
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                add_action('admin_footer', function() {
+                    echo "<script>
+                        console.log('WeeBunz API Debug Info:');
+                        console.log('REST API URL: " . esc_url(rest_url('weebunz/v1')) . "');
+                        console.log('REST API Status: " . (function_exists('rest_get_server') ? 'Available' : 'Not Available') . "');
+                        console.log('WP REST API Enabled: " . (get_option('permalink_structure') ? 'Yes' : 'No - Please enable pretty permalinks') . "');
+                        console.log('weebunzTest Localization:', window.weebunzTest);
+                    </script>";
+                });
+            }
         }
         
         wp_localize_script(

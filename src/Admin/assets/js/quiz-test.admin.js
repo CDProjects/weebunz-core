@@ -229,6 +229,31 @@
           return;
         }
 
+        // Debug API configuration
+        console.log("API Configuration:", window.weebunzTest);
+        
+        // Validate API configuration early
+        if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
+          console.error("API configuration missing or incomplete");
+          this.log("API configuration missing. Please check that the REST API is enabled.", "error");
+          this.log("Technical details: weebunzTest object not found or apiEndpoint not defined.", "error");
+          
+          // Show error in UI
+          $("#quiz-display").html(`
+            <div class="notice notice-error">
+              <p><strong>API Configuration Error</strong></p>
+              <p>The quiz API is not properly configured. This might be because:</p>
+              <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>The WordPress REST API is disabled</li>
+                <li>The WeeBunz Quiz REST API endpoints are not registered</li>
+                <li>There's a JavaScript error preventing proper initialization</li>
+              </ul>
+              <p>Please check the JavaScript console for more details.</p>
+            </div>
+          `);
+          return;
+        }
+
         this.inProgress = true;
 
         // If session exists, reset quiz first
