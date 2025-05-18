@@ -17,8 +17,8 @@ class QuizController {
     private $quiz_validator;
 
     public function __construct() {
-        $this->quiz_manager = new Quiz_Manager(get_current_user_id());
-        $this->quiz_validator = new Quiz_Validator(get_current_user_id());
+        $this->quiz_manager = new QuizManager(get_current_user_id());
+        $this->quiz_validator = new QuizValidator(get_current_user_id());
     }
 
     /**
