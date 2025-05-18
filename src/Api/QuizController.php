@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 
 use Weebunz\Quiz\QuizManager;
 use Weebunz\Quiz\QuizValidator;
-use Weebunz\Logger;
+use Weebunz\Util\Logger;
 
 class QuizController {
     private $namespace = 'weebunz/v1';
