@@ -41,9 +41,6 @@ class WeebunzAdmin {
         add_action( 'wp_ajax_weebunz_test_api', [ $this, 'handle_ajax_test_api' ] );
     }
 
-    /**
-     * Enqueue admin CSS.
-     */
     public function enqueue_styles() {
         wp_enqueue_style(
             $this->plugin_name,
@@ -54,12 +51,9 @@ class WeebunzAdmin {
         );
     }
 
-    /**
-     * Enqueue admin JS (and conditionally load React on our quiz-test page).
-     */
     public function enqueue_scripts() {
         $is_quiz_test_page = isset( $_GET['page'] ) && $_GET['page'] === 'weebunz-quiz-engine-quiz-test';
-        
+
         // Base admin script
         wp_enqueue_script(
             $this->plugin_name,
@@ -70,11 +64,11 @@ class WeebunzAdmin {
         );
 
         if ( $is_quiz_test_page ) {
-            // React + ReactDOM for the quiz test harness
+            // React + ReactDOM
             wp_enqueue_script( 'react',     'https://unpkg.com/react@17/umd/react.development.js', [], '17.0.2', false );
             wp_enqueue_script( 'react-dom', 'https://unpkg.com/react-dom@17/umd/react-dom.development.js', [ 'react' ], '17.0.2', false );
 
-            // Our quiz components bundle
+            // Quiz components bundle
             wp_enqueue_script(
                 $this->plugin_name . '-admin-quiz-components',
                 plugin_dir_url( __FILE__ ) . 'assets/js/quiz-components.admin.js',
@@ -101,7 +95,7 @@ class WeebunzAdmin {
                 true
             );
 
-            // Localize data for JS
+            // Localize data for quiz-test JS
             wp_localize_script(
                 $this->plugin_name . '-admin-quiz-test',
                 'weebunzTest',
@@ -110,11 +104,6 @@ class WeebunzAdmin {
                     'nonce'       => wp_create_nonce( 'wp_rest' ),
                     'apiEndpoint' => rest_url( 'weebunz/v1' ),
                     'debug'       => defined( 'WP_DEBUG' ) && WP_DEBUG,
-                    'demoStats'   => [
-                        'maxConcurrent'  => 500,
-                        'targetPlatform' => 'WordPress + React',
-                        'scalingCapacity'=> 'Optimized for low-latency on shared hosting',
-                    ],
                 ]
             );
 
@@ -125,7 +114,6 @@ class WeebunzAdmin {
                     <script>
                         console.log('WeeBunz API Debug Info:');
                         console.log('REST API URL: <?php echo esc_js( rest_url('weebunz/v1') ); ?>');
-                        console.log('REST API Status: ' + (typeof window.wp !== 'undefined' ? 'Available' : 'Not Available'));
                         console.log('weebunzTest Localization:', window.weebunzTest);
                     </script>
                     <?php
@@ -150,16 +138,13 @@ class WeebunzAdmin {
     public function handle_ajax_test_api() {
         check_ajax_referer( 'wp_rest', 'security' );
 
-        wp_send_json_success( [
+        wp_send_json_success([
             'status'    => 'success',
             'message'   => 'API connection successful',
             'timestamp' => current_time( 'mysql' ),
-        ] );
+        ]);
     }
 
-    /**
-     * Register plugin settings.
-     */
     public function register_settings() {
         // Your existing register_settings code here
     }
@@ -230,16 +215,16 @@ class WeebunzAdmin {
     }
 
     /**
-     * Renders the Quiz Test page partial.
+     * Renders the **Quiz Test** admin page by including the correct partial.
      */
     public function display_quiz_test_page() {
         // __DIR__ is .../weebunz-core/src/Admin
-        $partial = __DIR__ . '/Partials/test-page.php';
+        $partial = __DIR__ . '/Partials/quiz-test-page.php';
 
         if ( file_exists( $partial ) ) {
             include_once $partial;
         } else {
-            error_log( "WeebunzAdmin: partial not found at $partial" );
+            error_log( "WeebunzAdmin: quiz-test partial not found at $partial" );
             echo '<div class="notice notice-error"><p>Quiz Test page not found.</p></div>';
         }
     }
@@ -259,5 +244,4 @@ class WeebunzAdmin {
     public function display_load_testing_page() {
         include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-load-testing.php';
     }
-
 }
