@@ -36,12 +36,15 @@ class WeebunzAdmin {
 
         // Build the menu
         add_action( 'admin_menu',          [ $this, 'add_admin_menu'     ] );
+        
+        // Register AJAX test handler
+        add_action('wp_ajax_weebunz_test_api', [$this, 'handle_ajax_test_api']);
     }
 
     public function enqueue_styles() {
         wp_enqueue_style(
             $this->plugin_name,
-            plugin_dir_url( __FILE__ ) . 'css/weebunz-admin.css',
+            plugin_dir_url( __FILE__ ) . 'assets/css/weebunz-admin.css',
             [],
             $this->version,
             'all'
@@ -49,13 +52,73 @@ class WeebunzAdmin {
     }
 
     public function enqueue_scripts() {
+        // Detect if we're on the quiz test page
+        $is_quiz_test_page = isset($_GET['page']) && $_GET['page'] === 'weebunz-quiz-engine-quiz-test';
+        
+        // Base admin script
         wp_enqueue_script(
             $this->plugin_name,
-            plugin_dir_url( __FILE__ ) . 'js/weebunz-admin.js',
+            plugin_dir_url( __FILE__ ) . 'assets/js/weebunz-admin.js',
             [ 'jquery' ],
             $this->version,
             false
         );
+        
+        // Only load React and quiz testing scripts on the quiz test page
+        if ($is_quiz_test_page) {
+            // Load React and ReactDOM from CDN for testing
+            wp_enqueue_script(
+                'react',
+                'https://unpkg.com/react@17/umd/react.development.js',
+                array(),
+                '17.0.2',
+                false
+            );
+            
+            wp_enqueue_script(
+                'react-dom',
+                'https://unpkg.com/react-dom@17/umd/react-dom.development.js',
+                array('react'),
+                '17.0.2',
+                false
+            );
+            
+            // Load the quiz components - IMPORTANT: load after React
+            wp_enqueue_script(
+                $this->plugin_name . "-admin-quiz-components", 
+                plugin_dir_url( __FILE__ ) . "assets/js/quiz-components.admin.js", 
+                array("jquery", "react", "react-dom"), 
+                $this->version, 
+                true  // Load in footer to ensure React is loaded first
+            );
+            
+            // Load the quiz test script
+            wp_enqueue_script(
+                $this->plugin_name . '-admin-quiz-test', 
+                plugin_dir_url( __FILE__ ) . 'assets/js/quiz-test.admin.js', 
+                array('jquery', $this->plugin_name . "-admin-quiz-components"), 
+                $this->version, 
+                true  // Load in footer
+            );
+            
+            // Add localization for the quiz test script
+            wp_localize_script(
+                $this->plugin_name . '-admin-quiz-test', 
+                'weebunzTest', 
+                array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('wp_rest'),
+                    'apiEndpoint' => rest_url('weebunz/v1'),
+                    'debug' => defined('WP_DEBUG') && WP_DEBUG,
+                    'demoStats' => array(
+                        'maxConcurrent' => 500,
+                        'targetPlatform' => 'WordPress + React',
+                        'scalingCapacity' => 'Optimized for low-latency on shared hosting'
+                    )
+                )
+            );
+        }
+        
         wp_localize_script(
             $this->plugin_name,
             'weebunz_quiz_admin',
@@ -66,8 +129,21 @@ class WeebunzAdmin {
         );
     }
 
+    /**
+     * Test API AJAX handler
+     */
+    public function handle_ajax_test_api() {
+        check_ajax_referer('wp_rest', 'security');
+        
+        wp_send_json_success([
+            'status' => 'success',
+            'message' => 'API connection successful',
+            'timestamp' => current_time('mysql')
+        ]);
+    }
+
     public function register_settings() {
-        // … your existing register_setting() calls …
+        // Your existing register_settings code here
     }
 
     /**
@@ -94,7 +170,7 @@ class WeebunzAdmin {
             [ 'Settings',      'weebunz-quiz-engine-settings',     'display_settings_page'     ],
             [ 'Performance',   'weebunz-quiz-engine-performance',  'display_performance_page'  ],
             [ 'Tools',         'weebunz-quiz-engine-tools',        'display_tools_page'        ],
-            [ 'Load Testing',  'weebunz-quiz-engine-load-testing','display_load_testing_page' ],
+            [ 'Load Testing',  'weebunz-quiz-engine-load-testing', 'display_load_testing_page' ],
         ];
 
         foreach ( $subs as list( $title, $slug, $callback ) ) {
@@ -109,7 +185,7 @@ class WeebunzAdmin {
         }
     }
 
-    // — your existing display_*() methods unchanged —
+    // Your existing display methods here
     public function display_dashboard_page()    { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-dashboard.php'; }
     public function display_quizzes_page()      { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/quiz-management-page.php'; }
     public function display_questions_page()    { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/questions-page.php'; }

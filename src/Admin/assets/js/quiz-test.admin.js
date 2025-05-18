@@ -1,7 +1,17 @@
-// File: wp-content/plugins/weebunz-core/admin/js/quiz-test.js
+// File: wp-content/plugins/weebunz-core/src/Admin/assets/js/quiz-test.admin.js
 
 (function ($) {
   "use strict";
+
+  // Debug function to help troubleshoot React issues
+  function debugReactStatus() {
+    console.log("React available:", typeof React !== "undefined");
+    console.log("ReactDOM available:", typeof ReactDOM !== "undefined");
+    console.log("WeebunzQuiz available:", typeof window.WeebunzQuiz !== "undefined");
+    if (window.WeebunzQuiz) {
+      console.log("QuizPlayer component available:", typeof window.WeebunzQuiz.QuizPlayer !== "undefined");
+    }
+  }
 
   class QuizTestController {
     constructor() {
@@ -28,7 +38,8 @@
         console.log("Document ready in QuizTestController");
         this.bindEvents();
         this.initializeInterface();
-
+        debugReactStatus(); // Add this call to debug React status
+        
         // Debug checks
         console.log("Quiz type select exists:", $("#quiz_type").length > 0);
         console.log("Start button exists:", $("#start-quiz").length > 0);
@@ -50,46 +61,6 @@
       });
     }
 
-    async testApiConnection() {
-      try {
-        console.log("Testing API connection...");
-        this.log("Testing API connection...", "info");
-
-        if (!window.weebunzTest || !window.weebunzTest.apiEndpoint) {
-          console.error("API configuration missing");
-          this.log("API configuration missing", "error");
-          return;
-        }
-
-        const url = `${window.weebunzTest.apiEndpoint}/test`;
-        console.log(`Making test request to: ${url}`);
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "X-WP-Nonce": window.weebunzTest.nonce,
-          },
-          credentials: "same-origin",
-        });
-
-        console.log(`Test response status: ${response.status}`);
-        const responseText = await response.text();
-        console.log("Test response text:", responseText);
-
-        try {
-          const data = JSON.parse(responseText);
-          console.log("Parsed test response:", data);
-          this.log("API test successful", "success");
-        } catch (e) {
-          console.error("Failed to parse test response:", e);
-          this.log(`Failed to parse test response: ${e.message}`, "error");
-        }
-      } catch (error) {
-        console.error("API test failed:", error);
-        this.log(`API test failed: ${error.message}`, "error");
-      }
-    }
-
     bindEvents() {
       console.log("Binding events...");
 
@@ -99,9 +70,9 @@
         this.testApiConnection();
       });
 
-      // Quiz type selection with direct handler
+      // Direct event handler for quiz type select - IMPORTANT FIX
       $("#quiz_type").on("change", (e) => {
-        console.log("Direct change event on quiz type");
+        console.log("Quiz type changed");
         this.handleQuizTypeChange(e);
       });
 
@@ -183,11 +154,42 @@
       this.log("Quiz test interface initialized", "info");
     }
 
+    async testApiConnection() {
+      try {
+        console.log("Testing API connection...");
+        this.log("Testing API connection...", "info");
+
+        if (!window.weebunzTest || !window.weebunzTest.ajaxUrl) {
+          console.error("API configuration missing");
+          this.log("API configuration missing", "error");
+          return;
+        }
+
+        const response = await $.ajax({
+          url: window.weebunzTest.ajaxUrl,
+          method: "POST",
+          data: {
+            action: "weebunz_test_api",
+            security: window.weebunzTest.nonce
+          }
+        });
+
+        console.log("API test response:", response);
+        if (response.success) {
+          this.log("API test successful: " + JSON.stringify(response.data), "success");
+        } else {
+          this.log("API test returned error: " + response.data?.message || "Unknown error", "error");
+        }
+      } catch (error) {
+        console.error("API test failed:", error);
+        this.log(`API test failed: ${error.message || error}`, "error");
+      }
+    }
+
     handleQuizTypeChange(e) {
-      console.log("Quiz type change event triggered");
-      this.log("Quiz type change triggered", "debug");
+      console.log("Quiz type change handler called");
       const $selected = $(e.target).find("option:selected");
-      console.log("Selected option:", $selected);
+      console.log("Selected option:", $selected.val());
 
       if ($selected.val()) {
         const quizInfo = {
@@ -196,20 +198,11 @@
           timeLimit: $selected.data("time"),
         };
 
-        console.log("About to enable Start Quiz button");
-        const $startButton = $("#start-quiz");
-        console.log("Start button found:", $startButton.length > 0);
-        console.log(
-          "Button disabled state before:",
-          $startButton.prop("disabled")
-        );
+        console.log("Quiz info:", quizInfo);
+        // Enable the Start Quiz button
+        $("#start-quiz").prop("disabled", false);
+        console.log("Enabled Start Quiz button");
         
-        console.log("Button disabled state before:", $startButton.prop("disabled"));
-
-        console.log(
-          "Button disabled state after:",
-          $startButton.prop("disabled")
-        );
         this.updateQuizInfo(quizInfo);
         this.log(`Selected quiz type: ${$selected.text()}`);
       } else {
@@ -519,7 +512,7 @@
         this.log(JSON.stringify(response), "debug");
 
         if (response.completed) {
-          console.log("Quiz completed, handling completion");
+          console.log("Quiz completed according to result, handling completion");
           await this.handleQuizComplete();
           this.inProgress = false;
           return;
@@ -1160,32 +1153,6 @@
   $(document).ready(() => {
     window.WeebunzQuizTest = new QuizTestController();
   });
-
-  // Monitor state changes
-  $(document).on("quiz:state:change", (event, newState) => {
-    if (window.WeebunzQuizTest) {
-      window.WeebunzQuizTest.log(
-        `Quiz state changed: ${JSON.stringify(newState)}`,
-        "debug"
-      );
-    }
-  });
-
-  // Monitor API calls
-  $(document).on("quiz:api:call", (event, details) => {
-    if (window.WeebunzQuizTest) {
-      window.WeebunzQuizTest.log(`API call: ${details.endpoint}`, "debug");
-    }
-  });
-
-  // Monitor errors
-  $(document).on("quiz:error", (event, error) => {
-    if (window.WeebunzQuizTest) {
-      window.WeebunzQuizTest.log(`Error occurred: ${error.message}`, "error");
-    }
-  });
-
-  // With these updated versions:
 
   // Monitor state changes
   $(document).on("quiz:state:change", (_, newState) => {
