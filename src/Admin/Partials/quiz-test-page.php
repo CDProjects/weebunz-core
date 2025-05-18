@@ -1,5 +1,5 @@
 <?php
-// File: wp-content/plugins/weebunz-core/admin/partials/quiz-test-page.php
+// File: wp-content/plugins/weebunz-core/src/Admin/Partials/quiz-test-page.php
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -13,51 +13,11 @@ if (!defined('WP_DEBUG') || !WP_DEBUG) {
 
 global $wpdb;
 
-// Enqueue required scripts - Include React directly from CDN for testing
+// Include React directly from CDN for testing - this must come BEFORE any other scripts
 ?>
 <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
 <?php
-
-// Enqueue jQuery
-wp_enqueue_script('jquery');
-
-// Enqueue quiz components before the test script
-wp_enqueue_script(
-    'weebunz-quiz-components',
-    WEEBUNZ_PLUGIN_URL . 'public/js/quiz-components.js',
-    array('jquery'),
-    WEEBUNZ_VERSION,
-    true
-);
-
-wp_enqueue_script(
-    'weebunz-quiz-test',
-    WEEBUNZ_PLUGIN_URL . 'admin/js/quiz-test.js',
-    array('jquery', 'weebunz-quiz-components'),
-    WEEBUNZ_VERSION,
-    true
-);
-
-// Update the script localization:
-wp_localize_script('weebunz-quiz-test', 'weebunzTest', array(
-    'ajaxUrl' => admin_url('admin-ajax.php'),
-    'nonce' => wp_create_nonce('wp_rest'),
-    'apiEndpoint' => rest_url('weebunz/v1'),
-    'debug' => WP_DEBUG,
-    'demoStats' => array(
-        'maxConcurrent' => 500,
-        'targetPlatform' => 'WordPress + React',
-        'scalingCapacity' => 'Optimized for low-latency on shared hosting'
-    )
-));
-
-// Also localize for the quiz components
-wp_localize_script('weebunz-quiz-components', 'weebunzQuiz', array(
-    'ajaxUrl' => admin_url('admin-ajax.php'),
-    'nonce' => wp_create_nonce('wp_rest'),
-    'apiEndpoint' => rest_url('weebunz/v1')
-));
 
 // Get quiz types with question counts
 $quiz_types = $wpdb->get_results("
@@ -171,14 +131,84 @@ $quiz_types = $wpdb->get_results("
             const $quizType = $('#quiz_type');
             console.log('Quiz type select found:', $quizType.length > 0);
     
-            // Add a direct event handler
+            // Add a direct event handler to quiz type dropdown
             $quizType.on('change', function() {
                 console.log('Direct change event triggered');
                 console.log('Selected value:', $(this).val());
-                console.log('Selected option data:', {
-                    difficulty: $(this).find(':selected').data('difficulty'),
-                    questions: $(this).find(':selected').data('questions'),
-                    time: $(this).find(':selected').data('time')
+                
+                // Enable the Start Quiz button
+                if ($(this).val()) {
+                    $('#start-quiz').prop('disabled', false);
+                    
+                    // Update quiz info details
+                    var $selected = $(this).find('option:selected');
+                    var difficulty = $selected.data('difficulty');
+                    var questions = $selected.data('questions');
+                    var time = $selected.data('time');
+                    
+                    $('#question-count').text(questions);
+                    $('#time-limit').text(time);
+                    $('#quiz-type-details').removeClass('hidden');
+                } else {
+                    $('#start-quiz').prop('disabled', true);
+                    $('#quiz-type-details').addClass('hidden');
+                }
+            });
+            
+            // Manual event handler for Start Quiz button
+            $('#start-quiz').on('click', function(e) {
+                e.preventDefault();
+                console.log('Start Quiz button clicked manually');
+                
+                // Make sure button isn't disabled
+                if ($(this).prop('disabled')) {
+                    console.log('Button is disabled, not proceeding');
+                    return;
+                }
+                
+                // Log the action
+                $('#debug-log').prepend('<div class="info">[' + new Date().toISOString() + '] Starting quiz...</div>');
+                
+                // Show quiz interface
+                $('#quiz-interface').removeClass('hidden');
+                $('.quiz-test-controls').removeClass('hidden');
+                
+                // Update button text
+                $(this).text('End Quiz');
+                $('#reset-quiz').prop('disabled', false);
+                
+                // If a global controller exists, call it
+                if (window.WeebunzQuizTest && typeof window.WeebunzQuizTest.handleStartQuiz === 'function') {
+                    window.WeebunzQuizTest.handleStartQuiz();
+                } else {
+                    console.error('Quiz test controller not found or handleStartQuiz method missing');
+                    $('#debug-log').prepend('<div class="error">[' + new Date().toISOString() + '] Quiz controller not found. Check JS console.</div>');
+                }
+            });
+            
+            // Manual event handler for Test API button
+            $('#test-api').on('click', function(e) {
+                e.preventDefault();
+                console.log('Test API button clicked');
+                
+                $('#debug-log').prepend('<div class="info">[' + new Date().toISOString() + '] Testing API connection...</div>');
+                
+                // Make a simple AJAX request to test connectivity
+                $.ajax({
+                    url: weebunz_admin_params.ajax_url,
+                    method: 'POST',
+                    data: {
+                        action: 'weebunz_test_api',
+                        security: weebunz_admin_params.nonce
+                    },
+                    success: function(response) {
+                        console.log('API test response:', response);
+                        $('#debug-log').prepend('<div class="success">[' + new Date().toISOString() + '] API test successful</div>');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('API test failed:', error);
+                        $('#debug-log').prepend('<div class="error">[' + new Date().toISOString() + '] API test failed: ' + error + '</div>');
+                    }
                 });
             });
             
