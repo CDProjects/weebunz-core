@@ -207,7 +207,7 @@ class WeebunzAdmin {
         }
     }
 
-    // Your existing display methods here
+    // Existing display methods here
     public function display_dashboard_page()    { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/weebunz-admin-dashboard.php'; }
     public function display_quizzes_page()      { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/quiz-management-page.php'; }
     public function display_questions_page()    { include_once WEEBUNZ_PLUGIN_DIR . 'admin/partials/questions-page.php'; }
