@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-use Weebunz\Logger;
+use Weebunz\Util\Logger;
 
 class QuizManager {
     private $wpdb;
