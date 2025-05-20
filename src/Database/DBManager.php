@@ -51,45 +51,61 @@ class DBManager { // Renamed class to match PSR-4 and filename
 
     
     public function create_tables() {
-        // Logger::info("Creating base tables");
-        require_once(ABSPATH . "wp-admin/includes/upgrade.php");
-        
-        // Schema file is now expected to be in includes/database relative to plugin root
-        $schema_file = WEEBUNZ_PLUGIN_DIR . "Database/schema.sql";
+            // Logger::info("Creating base tables");
+            require_once(ABSPATH . "wp-admin/includes/upgrade.php");
     
-        if (!file_exists($schema_file)) {
-            // Logger::error("Schema file not found", ["path" => $schema_file]);
-            throw new \Exception("Schema file not found: " . $schema_file);
-        }
-    
-        $schema_content = file_get_contents($schema_file);
-        if (!$schema_content) {
-            // Logger::error("Failed to read schema file", ["path" => $schema_file]);
-            throw new \Exception("Failed to read schema file");
-        }
-    
-        $schema_content = str_replace(
-            array("{prefix}", "{charset_collate}"),
-            array($this->wpdb->prefix, $this->charset_collate),
-            $schema_content
-        );
-    
-        $statements = array_filter(
-            array_map("trim", explode(";", $schema_content)),
-            "strlen"
-        );
-    
-        // The $tables array from original code was to ensure order, 
-        // but dbDelta should handle individual CREATE TABLE statements correctly.
-        // If specific order is critical beyond what schema.sql defines, it needs careful review.
-        foreach ($statements as $sql) {
-            if (stripos($sql, "CREATE TABLE") !== false) {
-                 // Logger::debug("Executing SQL for table creation", ["sql_start" => substr($sql, 0, 50)]);
-                dbDelta($sql); // dbDelta expects full CREATE TABLE statements
+            // Corrected path (assuming 'Database' is directly under plugin root)
+            $schema_file = WEEBUNZ_PLUGIN_DIR . "Database/schema.sql"; 
+
+            // --- DEBUGGING START ---
+            error_log("DBManager: Attempting to load schema from: " . $schema_file);
+            if (!file_exists($schema_file)) {
+                error_log("DBManager: CRITICAL - Schema file NOT FOUND at: " . $schema_file);
+                // Optional: wp_die("Schema file not found at: " . esc_html($schema_file)); // Uncomment for hard stop during testing
+                return; // or throw new \Exception(...)
+            } else {
+                error_log("DBManager: Schema file FOUND at: " . $schema_file);
             }
+            // --- DEBUGGING END ---
+
+            $schema_content = file_get_contents($schema_file);
+            if (!$schema_content) {
+                // Logger::error("Failed to read schema file", ["path" => $schema_file]);
+                error_log("DBManager: CRITICAL - Failed to read schema file or file is empty: " . $schema_file); // Added error log
+                throw new \Exception("Failed to read schema file or file is empty");
+            }
+
+            // --- DEBUGGING START ---
+            error_log("DBManager: Content of schema file loaded (first 500 chars): " . substr($schema_content, 0, 500));
+            // --- DEBUGGING END ---
+
+            $schema_content = str_replace(
+                array("{prefix}", "{charset_collate}"),
+                array($this->wpdb->prefix, $this->charset_collate),
+                $schema_content
+            );
+
+            $statements = array_filter(
+                array_map("trim", explode(";", $schema_content)),
+                "strlen"
+            );
+
+            foreach ($statements as $sql) {
+                if (stripos($sql, "CREATE TABLE") !== false) {
+                    // Logger::debug("Executing SQL for table creation", ["sql_start" => substr($sql, 0, 50)]);
+                    dbDelta($sql); // dbDelta expects full CREATE TABLE statements
+
+                    // --- DEBUGGING START ---
+                    if (!empty($this->wpdb->last_error)) {
+                        error_log("DBManager: dbDelta error for SQL (CREATE TABLE context): " . substr($sql, 0, 200) . " | Error: " . $this->wpdb->last_error);
+                    } else {
+                        error_log("DBManager: dbDelta processed SQL for (CREATE TABLE context): " . substr($sql, 0, 100));
+                    }
+                    // --- DEBUGGING END ---
+                }
+            }
+            // Logger::info("Base tables creation process completed");
         }
-        // Logger::info("Base tables creation process completed");
-    }
     
     private function process_updates() {
         try {
