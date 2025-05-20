@@ -55,7 +55,7 @@ class DBManager { // Renamed class to match PSR-4 and filename
         require_once(ABSPATH . "wp-admin/includes/upgrade.php");
         
         // Schema file is now expected to be in includes/database relative to plugin root
-        $schema_file = WEEBUNZ_PLUGIN_DIR . "includes/database/schema.sql";
+        $schema_file = WEEBUNZ_PLUGIN_DIR . "Database/schema.sql";
     
         if (!file_exists($schema_file)) {
             // Logger::error("Schema file not found", ["path" => $schema_file]);
