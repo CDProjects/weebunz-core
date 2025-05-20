@@ -69,7 +69,7 @@ class Activator {
      */
     private static function update_database() {
         try {
-            $db_manager = new Database\DB_Manager();
+            $db_manager = new \Weebunz\Database\DBManager();
             $db_manager->create_tables();
         } catch (\Exception $e) {
             throw new \Exception('Database initialization failed: ' . $e->getMessage());

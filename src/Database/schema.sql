@@ -9,6 +9,11 @@ CREATE TABLE IF NOT EXISTS `{prefix}quiz_types` (
     `description` text,
     `difficulty_level` enum('easy','medium','hard') NOT NULL DEFAULT 'easy',
     `time_limit` int(11) NOT NULL DEFAULT 10,
+    `entry_cost` decimal(10,2) NOT NULL DEFAULT 0.00,
+    `max_entries` int(11) NOT NULL DEFAULT 1,
+    `answers_per_entry` int(11) NOT NULL DEFAULT 1,
+    `question_count` int(11) DEFAULT NULL,                   -- << ADDED (or NOT NULL with a DEFAULT)
+    `is_member_only` tinyint(1) NOT NULL DEFAULT 0,          -- << ADDED
     PRIMARY KEY (`id`),
     UNIQUE KEY `slug` (`slug`)
 ) {charset_collate};
