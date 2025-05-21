@@ -179,7 +179,6 @@ class DBManager {
         error_log("DBManager: initialize_test_data() called.");
         try {
             // REMOVE this require_once if DataVerifier is PSR-4 autoloaded from src/Database/
-            // require_once WEEBUNZ_PLUGIN_DIR . "src/Database/DataVerifier.php"; 
             
             // Use fully qualified namespace. Assumes DataVerifier.php is in src/Database/
             // and contains "namespace Weebunz\Database; class DataVerifier"
