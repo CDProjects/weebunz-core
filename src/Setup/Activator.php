@@ -136,7 +136,7 @@ class Activator {
             
             // SQL files are data, not classes, so their paths are direct.
             // Consider moving these SQL files into src/Database/data/ for better organization if desired.
-            $cleanup_file = WEEBUNZ_PLUGIN_DIR . 'includes/database/test-data/cleanup.sql';
+            $cleanup_file = WEEBUNZ_PLUGIN_DIR . 'src/Database/TestData/cleanup.sql';
             if (file_exists($cleanup_file)) {
                 error_log('Activator: Running test data cleanup SQL: ' . $cleanup_file);
                 // ... (your cleanup logic)
@@ -152,7 +152,7 @@ class Activator {
             $user_ids = $user_creator->create_users();
             error_log('Activator: Test users created. IDs: ' . implode(', ', $user_ids ?: []));
 
-            $test_data_file = WEEBUNZ_PLUGIN_DIR . 'includes/database/test-data/quiz-data.sql';
+            $test_data_file = WEEBUNZ_PLUGIN_DIR . 'src/Database/TestData/quiz-data.sql';
             if (file_exists($test_data_file)) {
                 error_log('Activator: Running main test data SQL: ' . $test_data_file);
                 // ... (your test data insertion logic) ...
