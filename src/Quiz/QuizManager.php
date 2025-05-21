@@ -65,14 +65,20 @@ class QuizManager {
     /**
      * Start new quiz session
      */
-    public function start_quiz($quiz_id) {
+    public function start_quiz($quiz_id) { // $quiz_id here is the ID from the quiz_types table
         try {
-            Logger::info('Starting quiz', [
-                'quiz_id' => $quiz_id,
-                'user_id' => $this->user_id
+            Logger::info('QuizManager::start_quiz - Starting process', [
+                'quiz_type_id_passed' => $quiz_id, // Log the incoming ID
+                'user_id'             => $this->user_id
             ]);
 
-            // fetch quiz_type + question_count in one query
+            // Fetch quiz_type details + actual question_count based on difficulty_level
+            // Your schema.sql for quiz_types includes a question_count column.
+            // If that 'question_count' column in 'quiz_types' table is meant to be the definitive number
+            // of questions for that type, you should select it directly.
+            // The COUNT(qp.id) AS question_count here calculates how many questions are *available*
+            // in the questions_pool for that difficulty, which might be different.
+            // For now, I'll assume $quiz->question_count from this query is what you intend to use for $num_questions.
             $sql = "
                 SELECT
                     qt.id,
@@ -82,97 +88,146 @@ class QuizManager {
                     qt.entry_cost,
                     qt.max_entries,
                     qt.answers_per_entry,
-                    COUNT(qp.id) AS question_count
+                    qt.question_count AS configured_question_count, # Get the configured count
+                    COUNT(qp.id) AS available_questions_in_pool   # Get available questions
                 FROM {$this->wpdb->prefix}quiz_types qt
                 LEFT JOIN {$this->wpdb->prefix}questions_pool qp
                     ON qp.difficulty_level = qt.difficulty_level
                 WHERE qt.id = %d
-                GROUP BY qt.id
-            ";
+                GROUP BY qt.id 
+            "; // Removed GROUP BY qt.id as qt.id in WHERE clause makes it unique
+               // Re-added GROUP BY qt.id because of the COUNT aggregate.
             $quiz = $this->wpdb->get_row($this->wpdb->prepare($sql, $quiz_id));
 
             if (!$quiz) {
+                Logger::error('QuizManager::start_quiz - Quiz type not found in database.', ['quiz_type_id_passed' => $quiz_id]);
                 throw new \Exception('Quiz type not found');
             }
+            Logger::debug('QuizManager::start_quiz - Quiz type details fetched', (array) $quiz);
 
-            $num_questions = (int) $quiz->question_count;
+            // Decide which question count to use.
+            // Using the configured_question_count from quiz_types table.
+            // If $quiz->configured_question_count is NULL or 0, you might fall back to available_questions_in_pool
+            // or throw an error if a specific count is required.
+            // For this example, let's assume configured_question_count is reliable.
+            if (empty($quiz->configured_question_count) || $quiz->configured_question_count <= 0) {
+                 Logger::error('QuizManager::start_quiz - Configured question_count for quiz type is invalid.', ['quiz_type_id' => $quiz_id, 'configured_question_count' => $quiz->configured_question_count]);
+                throw new \Exception('Invalid question count configured for quiz type.');
+            }
+            $num_questions = (int) $quiz->configured_question_count; 
+            Logger::debug('QuizManager::start_quiz - Number of questions for session', ['num_questions' => $num_questions]);
 
-            // Get random questions
-            $questions = $this->wpdb->get_results($this->wpdb->prepare("
+
+            // Get random questions from questions_pool
+            // Ensure qp.difficulty_level matches the quiz's difficulty_level
+            // Ensure LIMIT is $num_questions
+            $questions_sql = $this->wpdb->prepare("
                 SELECT
                     qp.*,
-                    GROUP_CONCAT(qa.id)          AS answer_ids,
-                    GROUP_CONCAT(qa.answer_text) AS answer_texts,
-                    GROUP_CONCAT(qa.is_correct)  AS correct_flags
+                    GROUP_CONCAT(qa.id ORDER BY qa.id)          AS answer_ids,        -- Added ORDER BY for consistency
+                    GROUP_CONCAT(qa.answer_text ORDER BY qa.id) AS answer_texts,    -- Added ORDER BY
+                    GROUP_CONCAT(qa.is_correct ORDER BY qa.id)  AS correct_flags    -- Added ORDER BY
                 FROM {$this->wpdb->prefix}questions_pool qp
                 JOIN {$this->wpdb->prefix}question_answers qa
                     ON qa.question_id = qp.id
-                WHERE qp.difficulty_level = %s
+                WHERE qp.difficulty_level = %s  -- Ensure this matches a value in the ENUM for questions_pool.difficulty_level
                 GROUP BY qp.id
                 ORDER BY RAND()
-                LIMIT %d
-            ", $quiz->difficulty_level, $num_questions));
+                LIMIT %d 
+            ", $quiz->difficulty_level, $num_questions);
+            
+            Logger::debug('QuizManager::start_quiz - Fetching questions SQL', ['sql' => $questions_sql]);
+            $questions = $this->wpdb->get_results($questions_sql);
 
             if (count($questions) < $num_questions) {
+                Logger::error('QuizManager::start_quiz - Insufficient questions available in pool.', [
+                    'quiz_type_id' => $quiz_id,
+                    'difficulty' => $quiz->difficulty_level,
+                    'needed' => $num_questions,
+                    'found' => count($questions)
+                ]);
                 throw new \Exception('Insufficient questions available');
             }
+            Logger::debug('QuizManager::start_quiz - Questions fetched for session', ['count' => count($questions)]);
 
-            // Create session
+
+            // Create session data to be stored
             $session_id   = wp_generate_uuid4();
             $session_data = [
-                'quiz_type_id'     => $quiz_id,
+                // 'quiz_type_id' is used in the transient and session_data column.
+                // The actual column in wp_quiz_sessions table is 'quiz_id'.
+                'quiz_type_id'     => $quiz_id, // This is the ID of the entry from wp_quiz_types
                 'user_id'          => $this->user_id,
-                'questions'        => $questions,
+                'questions'        => $questions, // Array of question objects
                 'current_question' => 0,
                 'answers'          => [],
                 'start_time'       => time(),
-                'expires_at'       => time() + $this->session_expiry,
+                'expires_at'       => time() + $this->session_expiry, // Expiry for transient and potentially for DB record logic
             ];
 
+            // Store session data in a transient
             set_transient(
-                'weebunz_quiz_session_' . $session_id,
-                $session_data,
-                $this->session_expiry
+                'weebunz_quiz_session_' . $session_id, // Transient key
+                $session_data,                         // Data to store
+                $this->session_expiry                  // Expiration time in seconds
+            );
+            Logger::debug('QuizManager::start_quiz - Session data stored in transient.', ['session_id' => $session_id]);
+
+            // Data for inserting into wp_quiz_sessions table
+            $insert_data_for_db = [
+                'session_id'   => $session_id,
+                // VITAL CHANGE HERE: Use 'quiz_id' as the key to match your wp_quiz_sessions table schema
+                'quiz_id'      => $quiz_id, // This refers to the ID of the quiz_type from wp_quiz_types
+                'user_id'      => $this->user_id,
+                'session_data' => maybe_serialize($session_data), // Serialize the detailed session data for storage
+                'status'       => 'active',
+                'created_at'   => current_time('mysql'),
+                'expires_at'   => date('Y-m-d H:i:s', time() + $this->session_expiry), // Expiry timestamp for DB
+            ];
+            
+            Logger::debug('QuizManager::start_quiz - Data for quiz_sessions table INSERT', $insert_data_for_db);
+
+            $result = $this->wpdb->insert(
+                $this->wpdb->prefix . 'quiz_sessions', // Table name
+                $insert_data_for_db                    // Data to insert
+                // Optional: $format array if you want to be explicit about data types
+                // e.g., ['%s', '%d', '%d', '%s', '%s', '%s', '%s']
             );
 
-            $this->wpdb->insert(
-                $this->wpdb->prefix . 'quiz_sessions',
-                [
-                    'session_id'   => $session_id,
-                    'quiz_type_id' => $quiz_id,
-                    'user_id'      => $this->user_id,
-                    'session_data' => maybe_serialize($session_data),
-                    'status'       => 'active',
-                    'created_at'   => current_time('mysql'),
-                    'expires_at'   => date('Y-m-d H:i:s', time() + $this->session_expiry),
-                ]
-            );
-            if ($this->wpdb->last_error) {
-                Logger::error('Database error starting quiz', [
-                    'error'   => $this->wpdb->last_error,
-                    'quiz_id' => $quiz_id
+            if ($result === false) {
+                Logger::error('QuizManager::start_quiz - Database error inserting into quiz_sessions.', [
+                    'db_error' => $this->wpdb->last_error,
+                    'quiz_id'  => $quiz_id, // This is the quiz_type_id
+                    'insert_data' => $insert_data_for_db // Log the data that failed
                 ]);
+                // Clean up transient if DB insert fails
+                delete_transient('weebunz_quiz_session_' . $session_id);
                 throw new \Exception('Failed to store quiz session');
             }
-
-            Logger::info('Quiz session started', [
+            Logger::info('QuizManager::start_quiz - Quiz session successfully started and stored in DB.', [
                 'session_id'     => $session_id,
+                'db_insert_id'   => $this->wpdb->insert_id, // ID of the row in wp_quiz_sessions
                 'question_count' => $num_questions
             ]);
 
+            // Data to return to the API caller (frontend)
             return [
                 'session_id'      => $session_id,
                 'total_questions' => $num_questions,
-                'time_limit'      => $quiz->time_limit,
-                'entry_reward'    => $quiz->max_entries
+                'time_limit'      => $quiz->time_limit, // Time limit per question or for whole quiz?
+                                                       // From your schema, quiz_types.time_limit and questions_pool.time_limit exist.
+                                                       // This returns the quiz_type's time_limit.
+                'entry_reward'    => $quiz->max_entries // This seems to map to max_entries for some reason, review if this is intended.
+                                                       // Usually entry_reward would be related to entry_cost or a separate reward column.
             ];
 
         } catch (\Exception $e) {
-            Logger::error('Failed to start quiz', [
+            Logger::error('QuizManager::start_quiz - Exception caught.', [
                 'quiz_id' => $quiz_id,
-                'error'   => $e->getMessage()
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString() // More detailed trace for debugging
             ]);
-            throw $e;
+            throw $e; // Re-throw the exception to be handled by the caller (e.g., API controller)
         }
     }
 
