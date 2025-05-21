@@ -135,14 +135,16 @@ class DataVerifier {
         error_log("DataVerifier: insert_questions_pool() started.");
         try {
             // Fetch existing category slugs and map them to their IDs
-            $category_map = [];
+            $category_map = []; // Initialize the map
             $categories_table = $this->wpdb->prefix . "quiz_categories";
-            $cats = $this->wpdb->get_results("SELECT id, slug FROM `{$categories_table}`", OBJECT_K);
+            $cats_results = $this->wpdb->get_results("SELECT id, slug FROM `{$categories_table}`"); // Fetch as standard array of objects
             if ($this->wpdb->last_error) {
-                 error_log("DataVerifier: DB Error fetching categories for map: " . $this->wpdb->last_error);
-            } elseif ($cats) {
-                foreach ($cats as $slug => $cat_obj) {
-                    $category_map[$slug] = $cat_obj->id;
+                error_log("DataVerifier: DB Error fetching categories for map: " . $this->wpdb->last_error);
+            } elseif ($cats_results) {
+                foreach ($cats_results as $cat_obj) {
+                    if (isset($cat_obj->slug) && isset($cat_obj->id)) {
+                        $category_map[$cat_obj->slug] = $cat_obj->id; // Correctly map slug to ID
+                    }
                 }
             }
             error_log("DataVerifier: Category map for questions: " . print_r($category_map, true));
